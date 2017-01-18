@@ -108,3 +108,52 @@ Modularity can be good or bad!
 		- flexibility/neutrality/Lack of assumptions
 		- Simplicity (learn/use/short manual)
 	Our WC program emphasizes 4 super hard, but everything else is low
+How to implement modularity
+	0) don't do it
+	1) function call caller/callee modularity 
+		ex [c]
+		int fact (int n){
+			if(n==0)
+				return 1;
+			else
+				return n*fact(n-1);
+		}
+		[end]
+		gcc didn't like it, tried to optimize, 
+		when asked to not-optimize it put out this
+
+		pushq %rbp
+		movq  %rsp, %rbp
+		subq  $16, %rsp
+		movl  %edi, -4(%rbp)
+		cmpl  $0, -4(%rbp)
+		jne   .L2
+		movl  $1, %eax
+		jmp   .L3
+
+		.L2
+		movl -4(%rbp), %eax
+		subl $1, %eax
+		movl %eax, %edi
+		call fact
+		mull -4(%rbp), %eax
+
+		.L3
+			leave
+			ret
+
+		function call modularity is the most common type of modularity in Software
+		Not what we want in OS though, since it can go wrong often/fail/robustnessis not there
+			- callee can mess up caller's head pointer
+			- callee can loop forever
+			- stack overflow
+			- callee can change the caller's registers
+			- can't rely on function call modularity fully
+		This is soft modularity we want hard modularity
+
+	2) Ways to get hard modularity 
+		1) use different computers for each module communicate via a network API
+			- cloud computing etc taking world by storm
+			- cost is p large
+			- worried about robustness of network as well
+		2) 
