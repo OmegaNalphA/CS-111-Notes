@@ -156,4 +156,10 @@ How to implement modularity
 			- cloud computing etc taking world by storm
 			- cost is p large
 			- worried about robustness of network as well
-		2) 
+		2) write an interpreter, which runs each untrusted module
+			- basically checks for bugs in program before it actually executes 
+			- stops it before the line runs
+			- tells command module failed
+			- cant use this approach to catch an infinite loop
+			- want reliability > performance
+			- subject for the next 5-6 lectures!

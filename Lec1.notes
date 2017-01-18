@@ -1,69 +1,68 @@
 Interface Stability
 1) fd = open(“file”, O_RDONLY)
-Local open
+	Local open
 2) fd = remote_open(“code.google.com”, “file”, O_RDONLY)
-Remote directory open, but no local!
+	Remote directory open, but no local!
 3) fd = open(“code.com”, “file”, O_RDONLY)
-Forget what this does
 4) open(“code.com:file”, O_RDONLY)
-Opens files with options!
+	Opens files with options!
 5) putenv(“FILESERVER” = code.com”)
-Fd = open(“file”, O_RDONLY)
+	Fd = open(“file”, O_RDONLY)
 6) fd = open(“file\0code.com”, O_RDONLY)
-Problem is, now wont distinguish between null byte for local open, meaning random garbage data can be accessed
+	Problem is, now wont distinguish between null byte for local open, meaning random garbage data can be accessed
 7) fd = open(“http://code.com/file”, O_RDONLY)
-Can have http folders, smth about the / too
+	Can have http folders, smth about the / too
 8) fd = open(‘/u/class/cs111/file” , O_RDONLY)
-Look in file systems
+	Look in file systems
 Sample app: Paranoid Professor
-Make new OS, nobody knows how to crack
-Want to count # of words in proposal 
-Want the equivalent of wc (unix program for word count) in our new, unknown OS
-But don’t want to use Linux AT ALL since could be bugged
-Want to count words on computer in office, unattached to internet 
-“Ascii words only, I don’t want any foreign words bc I don’t trust foreigners”
-Bootstrapping
-x86 boot procedure
-Sets 0xffff0 as instruction pointer 
-Divide the physical RAM into two parts
-Real DRAM
-Wiped at shutdown
-Read Only Memory - ROM/EEROM
-Cannot be changed, survives power outage
-What does it do?
-Tests system
-Makes sure all the stuff works properly
-Looks for devices
-Finds a bootable device
-Device that contains program in specially marked sectors of that device, one that we want to run
-Reads the device’s first sector into RAM
-At 0x7c00 - 0x7dff 
-Jmp 0x7c00
-Master Boot Record 512 Bytes (Sector 0)
-Last 2 bytes are reserved, so we can do step 3 
-Whether we can boot it, and whether we should boot it 
-Then 64 bytes in groups of 4 16 bytes each
-Each 16 bytes describes partition 
-Contains start sector (where partition starts)
-Size (# of sectors)
-Type (1 byte quantity linux filesystem etc.)
-Is Executable?
-The rest of the 446 bytes is x86 code
-Bootloader Source Code Sneak peak
-[c]
-for (i=1; i < 20; i++)
-	read _ide_setenv(i, 0x10000 + (i-1)*SR);
-At location 0x7c00 put that code ^
-read_ide _sector(int s, int a){
-//PIO
-	while((inb(0x1f7)&0xc0) !=0x40)
-		Continue;
-	outb(0x1f2, 1); //When command issued, want to do 1 sector
-	outb (ox1f3, s&0xff);
-	outb(ox1f4, (s>>8)&0xff);
-	outb(0x1f5, (s>>16)&0xff);
-	outb(0x1f6, (s>>24)&0xff); //need to shift bc outb uses bytes not words, so can only read in byte per cant do all 32 bytes at the same time. 
-	outb(0x1f7, 0x20);//Read sectors command/ATA Spec
-	insl(0x1f0, a, 512/4); //copies into a and executes?
-}
-[end]
+	Make new OS, nobody knows how to crack
+	Want to count number of words in proposal 
+	Want the equivalent of wc (unix program for word count) in our new, unknown OS
+		But don’t want to use Linux AT ALL since could be bugged
+	Want to count words on computer in office, unattached to internet 
+		“Ascii words only, I don’t want any foreign words bc I don’t trust foreigners”
+	Bootstrapping
+		x86 boot procedure
+		Sets 0xffff0 as instruction pointer 
+		Divide the physical RAM into two parts
+			Real DRAM
+				Wiped at shutdown
+			Read Only Memory - ROM/EEROM
+				Cannot be changed, survives power outage
+	What does it do?
+		Tests system
+		Makes sure all the stuff works properly
+		Looks for devices
+		Finds a bootable device
+		Device that contains program in specially marked sectors of that device, one that we want to run
+		Reads the device’s first sector into RAM
+		At 0x7c00 - 0x7dff 
+		Jmp 0x7c00
+	Master Boot Record 512 Bytes (Sector 0)
+	Last 2 bytes are reserved, so we can do step 3 
+	Whether we can boot it, and whether we should boot it 
+	Then 64 bytes in groups of 4 16 bytes each
+	Each 16 bytes describes partition 
+	Contains start sector (where partition starts)
+	Size (number of sectors)
+	Type (1 byte quantity linux filesystem etc.)
+	Is Executable?
+	The rest of the 446 bytes is x86 code
+	Bootloader Source Code Sneak peak
+	[c]
+	for (i=1; i < 20; i++)
+		read _ide_setenv(i, 0x10000 + (i-1)*SR);
+	At location 0x7c00 put that code ^
+	read_ide _sector(int s, int a){
+	//PIO
+		while((inb(0x1f7)&0xc0) !=0x40)
+			Continue;
+		outb(0x1f2, 1); //When command issued, want to do 1 sector
+		outb (ox1f3, s&0xff);
+		outb(ox1f4, (s>>8)&0xff);
+		outb(0x1f5, (s>>16)&0xff);
+		outb(0x1f6, (s>>24)&0xff); //need to shift bc outb uses bytes not words, so can only read in byte per cant do all 32 bytes at the same time. 
+		outb(0x1f7, 0x20);//Read sectors command/ATA Spec
+		insl(0x1f0, a, 512/4); //copies into a and executes?
+	}
+	[end]
