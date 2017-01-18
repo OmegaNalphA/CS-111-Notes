@@ -1,0 +1,110 @@
+1/18/2017
+Talking about booting from sectors, read_ide_sector
+>>>CODE>>>
+[c]
+void main(void) { 
+	int nwords=0; 
+	bool inword=false;
+	int  sectornum=10000;
+		While (true) {
+			Char buf[512];
+			read_ide _sector(s, buf);
+			for(int j = 0; j < 512; j++){
+				If(buf[j] == ‘\0’){
+					write_out(nwords);
+					//Return;
+					//Really want an infinite loop to display number on screen
+					while(true) continue;
+				} 
+				Bool thisalpha = isapha(buff[j]);
+				Nwords += !inword && thisalpha
+				inword = isalpha;
+			}
+		}
+}
+[end]
+
+Use memory map I/O
+
+[c]
+void writeout(int n){
+	unsigned char *screen = (unsigned char*)
+		(0xb8000 + 80*25*2/2 + 8)
+	do{
+		screen[0] = n%10 + '0' //low order byte
+		screen[1] = 7;
+		screen -= 2;
+		n/=10;
+	}while (n != 0)
+}
+[end]
+
+Problems in this code 
+	1) integer overflow
+	2) read_ide_sector multiple copies
+		1) wc
+		2) mbr
+		3) in ROM
+		Everything that loads from the master boot record will need a copy!
+		Can we arrange for a singular copy thats "bulletproof"	
+		Copy 3 is never going away, it's always going to be there
+		Call functions only in ROM if we know where it is [read_ide_sector = 0x7f000]
+	3) busy-waiting
+		theres no need to keep waiting at this point
+		wc can countwords and then wait for the next sector -> then read sector after that into new buffer
+		technique is called double buffering
+			trading memory for better cpu performance
+
+	Usually --> CPU --- RAM --- Disk Controller
+	But thats too slow
+	Now --> RAM --- Disk Controller
+	Called DMA (Direct Memory Access)
+	4) Use DMA to speed it up
+	5) Run several apps simultaneously
+	
+	Unified Extensible Firmware Interface (UEFI)
+		smarter Firmware
+		standard format for bootloader (EFI)
+			OS independent
+		Globally Unique Identifiers (GUID)
+			for partitions, 128 bit numbers in hex
+			each partition has a unique label
+			Be able to know whether it has seen a drive before
+			firmware will remember the GUID's 
+			Only trust certain
+		GUID partition table (GPT)
+			interpretable by the firmware for any comp
+		EFI Partitions use MS-DOS file format 
+		UEFI Boot manager
+			in firmware/bios
+			is configurable via non-volatile RAM (NVRAM)
+			reads GPT tables
+			can access files in MS-DOS format
+			can run EFI programs 
+
+	Essentially, an OS whose job it is to boot other OS's
+
+Our paranoid program in review
+	- its too much of a pain to change
+	- can't reuse code in other programs
+	- can't run several programs simultaneously
+	- assumes no failures in hardware 
+	- can't recover from faults/display error messages
+
+Modularity to the rescue
+	- Break into smaller/easier to handle chunks
+	- Software engineering advantage, n lines of code, k modules
+	- blah blah blah but time to find code is O(N^2) 
+	- modularity cuts debugging time by how many modules you have 
+		- is lowkey bullshit but w/e idea is there
+
+Modularity can be good or bad!
+	- Need metrics, way to measure if good or not idea
+		- performance
+			- does adding modularity add performance?
+			- generally adding modularity hurts performance
+		- robustness/tolerance of faults in hardware and Software
+			- how well does system handle violations to the interface you set up?
+		- flexibility/neutrality/Lack of assumptions
+		- Simplicity (learn/use/short manual)
+	Our WC program emphasizes 4 super hard, but everything else is low
