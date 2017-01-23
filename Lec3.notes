@@ -1,1 +1,133 @@
 1/23/2017
+#OS Organization
+Goals:
+	- Protection
+	- Robustness
+	- Utilization
+	- Performance
+	- Flexibility
+	- Simplicity
+
+This is great, but can't have all of them!
+Need to find best way to orgaize
+
+Function Calls maybe? (soft modularity)
+	Great for everything 
+	But absolutely terrible for protection and Robustness
+		only work if every byte of code is trustworthy and works 100%
+
+3 System Abstractions
+	1) memory
+		- load and store
+		- read and write
+		- Things to think about with memory
+			- size? 
+			- word size?
+			- throughput?
+			- latency?
+			- volatility?
+			- linear vs associative?
+	2) interpreters
+		- instruction pointer
+		- environment pointer
+		- reportive
+		- normal vs exceptional execution
+			- exception handlers
+			- traps/interrups
+	3) links
+		- send and receive (I/O bus)
+
+2 ways to hard modularity
+	1) Client/Server
+		- Client sends read request to Server
+		- Server sends response
+		- Form of (3) link abstraction!
+		- better than function calls because if server is written well, server can't be messed with
+		- limit error propagation
+			- no shared state
+			- even if loops or crashes
+		- hassle to set up 
+		- more resources, need more server!
+
+	2) Virtualization #will be focus of course
+		- just have 1 computer that pretends to be 2 or more
+		- Virtualization via emulation
+			- e.g. ARM emulator on SEASnet x86-64
+			- good for debugging but way too slow
+		- Virtualization via hardware support
+			- Filter will check if instruction looks safe
+			- Then hardware executes
+			- But if instruction looks iffy, then gives up
+			- unpriveleged vs priveleged instructions
+				- unpriveleged - run at full speed (addq $1, %eax)
+				- priveleged - doesn't run, causes the hardware trap -> almost like an invalid instruction (halt)
+			- Interupt service vector
+			- Have a trap array, if anything executed in there jump to code to be run when trap occurs
+				- both array and trap runners have to be in protected memory
+				- application can't have anything to do about it
+			- trap saves:
+				- stack pointer
+				- instruction pointer
+				- flags (also holds if priveleged or not)
+				- stack segment 
+				- code segment
+				- error code
+			- where to save all this info?
+				- Save it on the stack!
+			- differences between traps and fct calls
+				- way more expensive, have to save a ton of data vs a return address for function calls
+				- protected trasfer of control (between application and machine)
+			- trap handler can execute priveleged instructions
+			- way it has been done for years, but it is super slow!
+				- everything is saved in memory, and talking to memory is relatively slow
+
+Application and Hardware 
+	- Application runs unpriveleged commands
+	- another command, syscall, but run by kernel
+	- its like application, but can use priveleged instructions!
+	- almost all of your commands should be unpriveleged, bc priveleged take a ton longer
+
+Layered System 
+	- stdio level
+		- getchar putchar etc
+	- syscall level
+		- read + write
+
+Ring Structured operating System
+	- several layers each protected from the rest 
+	- files -> virtual memory -> kernel etc.
+		- every time to cross boundary you need to do a trap 
+			- very expensive and v slow
+
+Linux -> monolithic kernel
+
+Organization via Virtualization
+	- Have to think of resources of comp for ease of use and efficiency
+	- ALU (Arithmetic Logic Unit)
+		- user code has full access
+	- Registers
+		- user gets full access to common registers (rbp rsp rax etc) but flags ect no access or limited access
+	- primary memory
+		- user gets full access to user memory
+		- limited access to ISV and kernel access
+		- boundary between what users can do and system can do
+	- I/O 
+		- no access!
+
+process: program in execution in an isolated domain
+	- run on a virtualizable processor
+		- thinks they have syscall access but rlly they dont
+
+fork vs execvp
+	- fork 
+		- child = parent, but pID's ARE DIFFERENT
+		- different file descriptors
+		- accumulated execution times
+		- file locks (child has none)
+		- pending signals (SIGKILL etc)
+	- execvp is the opposite!
+		- but you have new
+			- program
+			- data
+			- registers
+			- Signal handlers and reset 
