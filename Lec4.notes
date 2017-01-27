@@ -1,0 +1,73 @@
+1/25/17
+[c]
+pid_t fork(void);
+	clones current process
+	returns -1 on failure
+	returns 0 in child
+	returns pid of child if parent
+void execvp (char const *file, char const *argv);
+	returns -1 //even though void
+[end]
+
+Zombie Process cannot do anything, no counter, but its still there
+How do we kill?
+	- not kill, not exit, but wait!
+[c]
+//process vulture, waits around to watch processes die
+pid_t waitpid(pid_t pid, int *status, int options); //use WNOHANG on options so returns -1 if process still running
+[end]
+
+Can only wait for your children to die, can't wait for just any process to die
+	- if you could put any process, you could wait for yourself and it'd be bad
+This is called "reaping" the child process
+
+Make sure to always check return value of fork!
+
+[c]
+bool printdate(void){
+	pid_t p = fork();
+	if(p < 0)
+		return false;
+	if(p == 0){
+		car *args[] = {"date", "-u", (char*)0};
+		execvp("/usr/bin/date", args);
+		_exit(23); //this makes exit without return, error check for execvp bc will only hit this point if execvp fails and returns!
+	}
+	int status;
+	if(waitpid(p, &status, 0) != p){
+		return false;
+	}
+	return WIFEXITED(status) && WEXITSTATUS(status) == 0;
+}
+[end]
+
+use alarm(10) to make the program only run for 10 seconds
+There is an easier way!
+[c]
+int posix_spawnvp(pid_t* restrict pid, char const *restrict file, posixspawnfile_actions_t const *file_acts, posix_spaw_aff .........)
+[end]
+
+^ Nobody uses this except for microsoft. It is little data structures to put into fork, way too complicated.
+
+Files 
+	- can be anything
+		- regular files (arrays of bites)
+		- directories (mappings from file name components to file attributes)
+		- /dev/null (trash can, write to succeeds read from 0 bytes)
+		- /dev/full 
+		- /dev/zero
+		- /dev/tty0
+		- /dev/dsk/0 -> low level access to disk drive
+		- pipes
+int open(char const*, int flags, ...);
+flags can be all this different stuff
+
+open is to linux => spawnvp is to microsoft
+Maybe it does too much?
+
+[c]
+creat(char const* f, mode_t m);
+open(f, O_RDWR|O_CREAT|O_TRUNC, m);
+[end]
+
+just use open, it can do everything anyway
