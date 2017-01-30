@@ -1,0 +1,126 @@
+1/30/2017
+What can go wrong with a file descriptor?
+Went over a ton of different error cases
+	- read past EOF
+	- step away from keyboard
+
+Dealing with Race Conditions
+	- behaviour that depends on timing
+	- "No excitement up ur spine, just chills down ur spine"
+	- Worst kind of bugs in the world
+[bash]
+(cat a & cat b) > c
+#two cats running at same time, which cat/cpu is faster? Might get a different c each time
+(cat>a & cat>b) < c 
+#both reading from c, writing to a and b splits c up since they'll grab whatever they can
+(apache1 & apache2) >> c
+[end]
+
+Example of race condition you might have to deal with
+gzip: compression program 
+
+gzip foo.tar, what does it do?
+	- reads foo.tar
+	- writes foo.tar.gz
+	- removes foo.tar
+User hits ^C 
+
+[c]
+int main(int argc, char** argv){
+	int fdk = open("/dev/tty", O_RDONLY | O_NONBLOCK);
+	int fdi = open("foo.tar", O_RDONLY);
+	int fdo = open("foo.tar.gz", O_WRONLY | O_CREAT | O_TRUNC, 0666);
+	do{
+		if(read(fdk, &c, 1) == 1 && c ==3){
+			unlink("foo.tar.gz");
+			return 1;
+		}
+		n = read(fdi, ... );
+		compare();
+		write(fdo, ... );
+	}while( 0 < n );
+	close(fdo);
+	unlink("foo.tar");
+}
+[end]
+
+We can use Polling to solve our issues
+	- keep asking about ^C at same point in loop
+	- When done right will work but is hassle
+	- Downside, have to modify at every loop to check ^C
+	- would rather want to separate out job so we dont have to keep modifying
+
+Using Signals!
+Goals
+	1) signal handler
+	2) Uncooperative programs in loops
+	3) invalid program illegal instructions
+		- SIGILL or floating point exception
+		- invalid address FIGSEGV SIGBUS
+		- I/O Errors
+			- SIGIO
+			- SIGPIPE write to pipe but no readers
+		- Process
+			- SIGCHILD - a child died 
+				- used to call waitpid immediately
+		- SIGKILL SIGSTOP SIGTSTP SIGCONT -> cannot be caught by handler, !not catchable! (signal nuum 9)
+
+Signals
+- change to processes abstract machines
+- between any two instructions, a signal can arrive
+- a signal handler function is executed
+	- this function is specified by the application
+
+[c]
+void hadle_control_c(int sig) {
+	unlink("foo.tar.gz");
+	_exit(126);
+}
+[end]
+
+Poss race condition here!
+	- race condition, could call signal and unlink foo.tar.gz without anything being there
+	- Signal arrives after we remove uncompressed file
+	- can use special args, SIG_IGN
+		- Ignore the signal at that point
+
+[c]
+int main(int argc, char** argv){
+	int fdk = open("/dev/tty", O_RDONLY | O_NONBLOCK);
+	int fdi = open("foo.tar", O_RDONLY);
+	int fdo = open("foo.tar.gz", O_WRONLY | O_CREAT | O_TRUNC, 0666);
+	do{
+		if(read(fdk, &c, 1) == 1 && c ==3){
+			unlink("foo.tar.gz");
+			return 1;
+		}
+		n = read(fdi, ... );
+		compare();
+		write(fdo, ... );
+	}while( 0 < n );
+	close(fdo);
+	signal(SIGINT, SIG_IGN);
+	unlink("foo.tar");
+}
+[end]
+
+critical parts of program
+- unlink and say
+
+can handle with sig ignore to signal handler
+
+[c]
+signal(SIGINT, SIG_IGN);
+//critical part
+signal(SIGINT, hadle_control_c);
+[end]
+
+user can get mad, seems like ^C is getting ignored
+theres another flag, more lightweight that blocks signal but stores it
+
+[c]
+what you were blocking = pthread_sigmask(block SIGINT)
+//critical part
+pthread_sigmask(old set);//^C arrives here
+[end]
+
