@@ -124,3 +124,60 @@ what you were blocking = pthread_sigmask(block SIGINT)
 pthread_sigmask(old set);//^C arrives here
 [end]
 
+signal handlers can arrive between machine instructions
+Signal handler acts like function call, but will splice into instruction array 
+
+[c]
+void handle_signal(int sig){
+	FILE *f = fopen("file", "W");
+	fprintf(f, "caught signal %d\n", sig);
+	fclose(f);
+}
+[end]
+
+this code has an issue,
+- we want to keep signal handlers as simple as possible
+- they arent allowed to break anything!
+
+fopen calls malloc, and this is super dangerous
+- it modifies the heap data structure
+
+malloc calls take a long time on the stack, is possible to get interrupted in the middle
+if malloc gets called again during signal, it will crash
+
+#only call async_signal_safe functions
+
+Signals
++ can manage processes better
++ fixed some robustness & performance issues
+- processes are less isolated
+- can be signaled at any time => races
+- signal handling is notoriously buggy
+	- emacs Example
+
+Threads come in
+- get rid of memory isolation
+- all memory is shared, there is no memory isolation
+- threads can communicate
+- this makes race conditions crazy
+- no need for signals or pipes, threads can pick up info on their own 
+
+Threads share as much as possible
+- memory (address sace) as well as code (instruction pointers are different)
+- file descriptors
+- owner, pid, ppid ...
+
+They don't share 
+	- instruction pointers
+		- each one must be separate to run properly
+		- registers ae separate as well
+		- they dont share the stack
+		- thread id 
+		- errno
+
+Try to keep differences to a minimum, we want them to be super lightweight
+
+The Resource Allocation Problem
+
+8-Core CPU, and 1000 threads what do we do?
+- use cpu to run program to schedule cpu
