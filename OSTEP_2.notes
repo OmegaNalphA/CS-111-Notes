@@ -1,0 +1,86 @@
+Chapter 2
+
+Intro to Operating Systems
+
+Running program executes instructions
+
+processor fetches instruction, decodes instruction, then executes
+This is the #Von Neuman# model of computing
+
+Operating System: The body of software to make the system operate correctly in an easy to use manner
+
+Primary technique is !virtualization!
+	- takes physical resource
+		- processor, memory or disk
+	- transforms into more powerful, easy to use virtual form
+this is why OS = virtual machine
+
+OS and system calls
+	- AKA "standard library"
+
+OS AKA Resource Manager
+
+#2.1# Virtualizing CPUs
+
+OS can illusion
+	- Infinite program example, even though infinite loop all programs run!
+	- illusion is very large number of virtual CPUs
+	- Virtualizing the CPUs
+
+OS Policies & Mechanisms => Resource Manager
+
+#2.2# Virtualizing Memory
+
+Physical Memory: Array of bytes
+- read with address to access data, write to update memory
+
+Malloc Example
+- Memory reference within one running program does not affect addresses of other programs
+- seems like it has its own memory space
+
+#2.3# Concurrency
+
+OS is juggling a lot, what to prioritize
+
+Threading example with shared memory
+- Since load can overwrite previous address location, can be overwritten at wrong time
+atomically: all at once instructions
+
+#2.4# Persistence
+
+Storage of data without loss
+I/O devices, hard drives, SSD's
+file system: stores fileson disks
+
+#2.5# Design Goals
+
+Abstractions are fundamental to system convenience
+Goal is to minimize overhead of OS
+Protection between applications
+	- isolating between processes
+Reliability is key
+
+energy-efficiency, security, mobility etc. all good Goals
+
+#2.6# Some History
+
+Early Operating System- Just Libraries
+- set of libraries of commonly used functions
+- one program ran at a time, controlled by human
+- "batch" processing
+
+Beyond Libraries- Protection
+System calls were invented
+	- transition between hardware and OS more formal
+	- traps and trap handlers used to alert system
+
+Era of Multiprogramming
+Better use of Machine Resource
+Rise of protection and concurrency issues
+
+Modern Era
+Linux is Lyfe
+
+#2.7# Summary
+
+Read it again

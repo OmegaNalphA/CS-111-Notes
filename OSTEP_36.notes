@@ -1,0 +1,67 @@
+Chapter 36
+
+I/O Devices
+
+#36.1# System Architecture
+
+Single CPU -> memory bus -> memory
+
+Why have hierarchical structure? Physics and Cost
+	- faster = shorter, so cant expand much/doesnt havemuch room
+
+#36.2# A Canonical Device
+
+Device has 2 important components
+	1) hardware interface
+		- just like software, needs interface to be controlled
+	2) internal structure
+		- implements abstract device presents of the system
+
+#36.3# The Canonical Protocol
+
+Example Device with status, command, and data registers
+- OS can now control device
+
+Polling: Constantly asking device for status
+
+#36.4# Lowering CPU Overhead With Interupts
+
+Use the interupt instead of polling device repeatedly
+	- OS issues request
+	- puts process to sleep
+	- context switches to another task
+Then uses interupt handler to decide what to do
+
+Although its great, only use for slower systems
+Context switching costs a lot, and if device is fast no need to use interrupt
+
+Coalescing: wait before delivering interupt, so it combines multiple interrupts
+
+#36.5# More Efficient Data Movement with DMA
+
+DMA: Direct Memory Access
+Tells DMA what to copy, how much and where to send it 
+frees up OS and DMA can handle rest with an interrupt
+
+#36.6# Metods of Device Interaction
+
+Can have specific instructions (in and out on x86 machines)
+	- these are priveleged instructions, OS only
+
+memory-mapped I/O
+	- device registers act as memory locations
+
+Neither has a legit advantage
+
+#36.7# Fitting Into the OS: The Device Driver
+
+Use abstraction and device drivers to not care about hardware device is running on
+Device driver code has become super integrated, very buggy
+generally dont capture full essence of hardware/utilization
+
+#36.8# Case Study- A Simple IDE Disk Driver
+#36.9# Historical Notes
+#36.10# Summary
+interupt vs DMA
+explicit I/O vs memory-mapped I/O
+Device drivers
