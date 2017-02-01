@@ -96,3 +96,22 @@ Scheduling Metrics
 	- response time
 	- turnaround time
 - can also calculate the variance
+
+throughput: how may jobs per second can we do
+	- useful work per unit of time
+
+utilization: 90% utilized if 90% of the time its doing actual threadwork
+	- minimize wait/response time
+
+fairness: max fair, min variance, competes with utilization
+
+Simple Scheduling policy
+- first come first serve (FCFS)
+	- priority = arrival time (no yielding)
+
+jobs 	arrival time 	run time
+A 		0				5
+B 		1				2
+C 		2			
+
+Lost rest of lecture, ran out of battery. 10 minutes left
