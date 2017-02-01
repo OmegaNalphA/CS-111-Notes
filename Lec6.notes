@@ -1,0 +1,98 @@
+2/1/2017
+
+[c]
+#include<pthread.h> //usr/included/pthread.h
+int pthread_create(pthread_t *thread, pthread_attr_t const *attr, void (*start) (void *), void *arg);
+
+void pthread_exit(void *value);
+void pthread_join(pthread_t thr, void *value); //like waitpid for processes
+void pthread_kill(pthrea_t, int); //like kill for process, zombie thread
+
+[end]
+
+how do they work without stepping on each other?
+If simple, no need to listen to the rest of the lecture
+
+Cooperative Threads
+- yield the CPU to other threads (for fairness)
+- at every system call, kernel chooses which thread to return to
+^ poss infinite loop issue
+
+This is where sched.h comes in, can schedule threading
+
+Poss Solution, every 100ms or less, use a system call so can exit if needed (very hard to maintain)
+- maybe get OS to fo it for us
+Hardware Timer Interrupt
+- clock connected to cpu 
+	- variable time (10ms on linux) CPU traps via interupt service vector to clock interrupt code
+	- equivalent of sched_yield, essentially is a system call
+	- jumps to other portion of kernel code, but have to save registers of thread 
+	- so kernel decides to return to some other thread or stay in trap 
+
+"Sunny Side of Threads"
+
+Solvng infinite loop problem
+	- timeout for the process
+	- user initiated interrupts
+	- don't use loops!
+		- make sure there is an upper bound on number of times to execute
+
+Cooperating across shared memory and I/O devices
+
+3 basic techniques
+1) busy waiting
+	- [c] while(!ready()) continue; [end]
+2) Polling 
+	- keep asking cpu if ready
+	- [c] while(!ready()) sched_yield(); [end]
+3) blocking
+	- [c] while(!ready(device)) wait_for(device);[end]
+	- don't wake me up until device is ready.
+
+Include a thread state, where its running, runnable, or blocked
+	- scheduler uses these states to decide what to run next
+
+Which thread to run next?
+Based all on scheduling policy (not a mechanism)
+scheduling: policies and dispatch mechanisms
+
+Example is airline scheduling, have to schedule airplane and gate, flight crew etc. 
+
+Scheduling scale
+	- long term
+		- which processes are admitted to the system (admission control)
+	- medium
+		- which proccesses are in RAM?
+	- short
+		- which threads have CPU?
+		- preemptive - clock interrupt
+		- Cooperative - yield()
+
+Issues still arise,
+	- priority queues and multilevel systems
+		- threads trying to run but are in different categories
+			- system thread queue (high priority)
+			- interactive threads (next priority)
+			- batch threads (lower priority)
+			- student threads 
+
+Realtime Schedulers
+1) Hard Realtime Schedulers
+	- hard real time (nuclear power)
+		- has to arrange for some deadline to be met, cannot miss deadline at all
+		- equivalent to dumping core essentially 
+		- bug just as serious as miscalculating temp of reactor
+		- in this approach, predictability trumps performance
+			- e.g. caches disable, keep caches off
+
+2) Soft Realtime Schedulers
+	- Some deadlines can be missed, if there is too much work
+		- Ex, video playback get data, render it
+			- deadline for each frame, if can't render just skip it
+	- e.g. earliest deadline first
+
+Scheduling Metrics
+- average/expected wait time
+	- response time
+	- turnaround time
+- can also calculate the variance
