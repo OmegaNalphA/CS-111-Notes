@@ -1,0 +1,95 @@
+Chapter 6
+
+Mechanism: Limited Direct Execution
+
+Time Sharing: run one process, then switch, and keep switching
+
+Challenges
+- performance
+	- implement virtualization w/o excessive overhead
+- control
+	- how to run efficiently while still retaining control of cpu
+^competing challenges, high performance and maintain control
+
+Basic Technique- Limited Direct Execution
+LDE: Run all programs on cpu
+- run programs, then jump back to kernel and free memory
+
+Problems
+- OS can't keep track of program doing suspicious stuff
+- how to stop process, or switch to another
+
+Problem 1, Restricted Operations
+
+Direct execution is defs fast
+But we need restricted operations so it doesnt do dumb stuff
+
+New processor mode, user mode
+- code here is restricted as to what it can do
+
+kernel mode has no restrictions
+
+If user wants to read or write, we do System Call 
+
+#Tip# User Protected Control Transfer
+trap instructions and return-from-trap instructions control tapping into kernel mode
+also lets OS tell hardware where the trap table resides in memory
+
+Executing a system Call
+- program must execute special trap instructions
+	- jumps into kernel, and raises privelege level
+- then calls return-from-trap, reduces privelege level
+
+hardware has to be careful when trapping
+- has to save registers to be able to return
+- x86, processor pushes program counter, flags and registers onto kernel stack
+
+Kernel has to be very specific about where to jump to memory when trapping
+- sets up trap table at boot Time.
+- When booting, is in kernel mode, OS tells hardware where the location of trap-handlers anre 
+
+System-call numbers, places that number in a register
+- this way user code requests function instead of memory address to jump to
+
+Problem 2 - Switching Between Processes
+
+If process is running OS is not running, how does it do anything?
+
+How can OS regain control of CPU so it can do switching?
+
+Cooperative Approach: Wait for System calls
+
+Generally, OS trusts the process of the system to behave
+- if too long, it'll pass control to cpu
+	- does this through sys calls
+	- implements yield call to yield to OS
+- transfers @ illegal, div by 0 or memory access
+- but what happens with infinite loops?
+
+Non-Cooperative Approach: OS takes Control
+
+Solve earlier problem with timer interrupt
+- have a timer that raises an interrupt every couple of milliseconds
+	- process halts, and interrupt handler is run
+
+OS tells hardware
+	- @ boot time OS tells hardware what code to run when interrupt timer occurs
+	- @ boot time OS has to start timer
+		- can be turned off, but this is concurrency
+
+Hardware needs to save enough of current process so return-from-trap can succeed
+
+Saving and Restoring Context
+Now that OS has control, needs to figure out what to do 
+- enter scheduler
+
+If descsion to switch, OS creates a context switch
+- OS saves registers of curr process, switch to registers of another process
+- saves to stack, and switches stacks
+- once return-from-trap is called, new process is now current
+
+Worried about Concurrency?
+Concurrency handles during trap or interrupt, another interrupt occurs
+- might disable interrupts during interrupt processing
+	- poss to loose interrupt though 
+- developed locking schemes to prevent concurrent access to internal data structures
