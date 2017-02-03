@@ -1,0 +1,54 @@
+Scheduling Introduction
+
+This chapter covers scheduling policies
+
+7.1 Workload Assumptions
+
+Workload: processes running on system
+
+The Assumptions
+1) Each job runs for the same amount of time
+2) All jobs arrive at the same time
+3) Once started each job runs to completion
+4) All jobs use the CPU(No I/O)
+5) The run time for each job is known
+
+7.2 Scheduling Metrics
+
+we will only focus on turnaround time for now
+- time job completes minus time job arrived
+- according to assumption 2, time arrived = 0
+
+This chapter focuses on performance metrics over fairness metrics
+
+7.3 First In, First Out (FIFO)
+
+Its easy, but if one process is exponentially longer than the others, then has to wait
+
+7.4 Shortest Job First (SJF)
+
+This solves last problem, but if jobs dont arrive at the same time(assumption 2) then donezos
+
+7.5 Shortest time to completion First (STCF)
+
+preempt long job when shorter jobs arrive, and run those quickly
+
+7.6 New Metric - Response Time 
+Defined as time from arrival to first time its scheduled
+- want this to be as small as possible for multiple users on a machine
+- Job A,B,C arrive at same time, but C has to wait for A and B to finish before it can started
+
+7.7 Round Robin
+Run each job for a time slice
+- dont want too small slice, or cost of context switching too high
+- slice has to be multiple of timer interrupt
+- really good for response time, but terrible turnaround time
+
+7.8 Incorporating I/O
+When I/O is activated, the CPU isnt allowed to work 
+- blocked till completion
+
+Use Overlap
+- CPU used for other process while I/O completes
+
+
