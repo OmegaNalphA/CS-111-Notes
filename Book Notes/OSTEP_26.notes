@@ -1,0 +1,121 @@
+Concurrency An Intro
+
+Abstraction for single running process, the #thread#
+- more than one point of execution
+- each thread is like a separate process, 
+	- but share same address space and data
+
+Threads have
+- program counter (PC)
+	- where program is getting instructions from
+- private set of registers
+	- have to context switch between threads for registers 
+
+- Process Control Block (PCB) 
+	- saves state of registers/processes
+- thread control blocks (TCB)
+	- store state of thread 
+	- context switch has same address space here than in PCB's
+
+In multi thread, there is one stack per thread 
+- therefore, any stack allocated variables will be in #thread local storage
+- usually the space issue is fine, but watch out for recursion as the great number of stacks could outgrow and start rewriting other stacks
+
+26.1 Why Use Threads?
+
+1) Parallelism: can speed up process by using unused processors to do portions of work
+2) avoid blocking due to slow I/O: while one thread waits(#is blocked#) scheduler can switch to another thread
+- this allows overlap of I/O with activities
+
+Process vs Threads
+- process are good for logically separate tasks with no shared data
+- threads if data sharing between different process 
+
+26.2 An Example Thread Creation 
+
+[c]
+1 #include <stdio.h>
+2 #include <assert.h>
+3 #include <pthread.h>
+4
+5 void *mythread(void *arg) {
+6 printf("%s\n", (char *) arg);
+7 return NULL;
+8 }
+9
+10 int
+11 main(int argc, char *argv[]) {
+12 pthread_t p1, p2;
+13 int rc;
+14 printf("main: begin\n");
+15 rc = pthread_create(&p1, NULL, mythread, "A"); assert(rc == 0);
+16 rc = pthread_create(&p2, NULL, mythread, "B"); assert(rc == 0);
+17 // join waits for the threads to finish
+18 rc = pthread_join(p1, NULL); assert(rc == 0);
+19 rc = pthread_join(p2, NULL); assert(rc == 0);
+20 printf("main: end\n");
+21 return 0;
+22 }
+[end]
+
+Hard to know what order threads will run, life gets terrible from here
+
+26.3 Why it gets Worse, Shared data
+
+Shared data makes life a living hell
+
+26.4 The Heart Of the Problem, Uncontrolled Scheduling
+
+If there is a shared variable both threads are modifying in the same address
+- the value will be very different all the time 
+- cant rely on the data
+
+^^^ This is the basis of !race conditions!
+
+deterministic: always know result
+indeterminist: not guaranteed
+
+critical section: portion of code that accesses shared variable/resource
+
+mutual exclusion solves this Problem
+mutual exclusion: one thread executes critical section at a time
+
+26.5 The Wish For Atomicity
+
+atomically: One-call instructions that can't be interrupted mid instruction
+- has to be implemented hardware
+- "as a unit"
+- doesn't usually exist
+
+Instead, we ask for synchronization primitives
+- solved later
+
+26.6 Another Problem, Waiting for Another
+
+Asks for I/O that other thread relies on, needs to sleep then awake
+this uses condition variables, later in book
+
+26.7 Summary
+
+ASIDE: KEY CONCURRENCY TERMS
+CRITICAL SECTION, RACE CONDITION,
+INDETERMINATE, MUTUAL EXCLUSION
+
+These four terms are so central to concurrent code that we thought it
+worth while to call them out explicitly. See some of Dijkstra’s early work
+[D65,D68] for more details.
+
+• A critical section is a piece of code that accesses a shared resource,
+usually a variable or data structure.
+• A race condition arises if multiple threads of execution enter the
+critical section at roughly the same time; both attempt to update
+the shared data structure, leading to a surprising (and perhaps undesirable)
+outcome.
+• An indeterminate program consists of one or more race conditions;
+the output of the program varies from run to run, depending on
+which threads ran when. The outcome is thus not deterministic,
+something we usually expect from computer systems.
+• To avoid these problems, threads should use some kind of mutual
+exclusion primitives; doing so guarantees that only a single thread
+ever enters a critical section, thus avoiding races, and resulting in
+deterministic program outputs.
