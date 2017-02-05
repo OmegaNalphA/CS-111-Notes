@@ -1,0 +1,97 @@
+Multi-Level Feedback Queue
+
+(MLFQ)
+
+Fundamental problem to attack
+1) turnaround time
+2) Make program feel responsive to users
+	- response time
+
+How can we design a scheduler that both minimizes response time for
+interactive jobs while also minimizing turnaround time without a priori
+knowledge of job length?
+
+8.1 MLFQ Basic Rules
+
+number of distinct queues
+- each one has a different priority level
+
+each job administered to a certain queue
+- higher queue = higher priority = higher runability
+- if same priority, round robin it (See chapter 7)
+
+Rule 1: If Priority(A) > Priority(B), A runs (B doesn’t).
+Rule 2: If Priority(A) = Priority(B), A & B run in RR
+
+MLFQ varies priority of job based on observed behaviour
+- ex. something that needs keyboard input not much cpu performance needs high priority to be responsive 
+- but high cpu performance with no input low priority bc response isnt as important as turnaround
+
+MLFQ uses learning of process as runs, uses history to inform future behaviour
+
+8.2 Attempt 1, How to Change Priority
+
+Rule 3: When a job enters the system, it is placed at the highest priority (the topmost queue).
+Rule 4a: If a job uses up an entire time slice while running, its priority is reduced (i.e., it moves down one queue).
+Rule 4b: If a job gives up the CPU before the time slice is up, it stays at the same priority level.
+
+MLFQ assumes initially short job, then reduces priority longer it takes
+- approximates SJF (see chapter 7)
+
+Problems with our implementation
+starvation: if there are too many interactive jobs, will consume all CPU time
+- long running jobs are starved out
+Smart user could rewrite program to game scheduler, take over other process
+- use 99% of timeslice, then I/O so relinquish CPU and stay at same priority level
+- monopoloizes CPU
+Also can change behaviour over time
+
+8.3 Attempt 2 Priority Boost 
+
+Solving starvation
+periodically boost the priority of jobs in system
+
+Rule 5: After some time period S, move all the jobs in the system to the topmost queue.
+
+Process are guaranteed not to starve, and if suddenly becomes interactive scheduler treats it properly 
+
+How to set S? its voo-doo constant
+- just a gamble to set 
+
+8.4 Attempt 3, Better Accounting
+
+Rule 4a and 4b screw us by letting job retain priority when relinquish CPU
+
+solution, accounting 
+accounting: scheduler keep track of time used and time alloted, if uses more than that is demoted
+
+Rule 4: Once a job uses up its time allotment at a given level (regardless of how many times it has given up the CPU), its priority is reduced (i.e., it moves down one queue)
+
+8.5 Tuning MLFQ and Other Isssues 
+
+How to parameterize such a scheduler
+- How many queues should there be 
+- how big time slice
+- How often to boost priority
+
+All of these are set differently in different systems, entirely configurable
+
+8.6 Summary
+
+Rule 1: If Priority(A) > Priority(B), A runs (B doesn’t).
+Rule 2: If Priority(A) = Priority(B), A & B run in RR.
+Rule 3: When a job enters the system, it is placed at the highest
+priority (the topmost queue).
+Rule 4: Once a job uses up its time allotment at a given level (regardless
+of how many times it has given up the CPU), its priority is
+reduced (i.e., it moves down one queue).
+Rule 5: After some time period S, move all the jobs in the system
+to the topmost queue
+
+MLFQ is interesting for the following reason: instead of demanding
+a priori knowledge of the nature of a job, it observes the execution of a
+job and prioritizes it accordingly. In this way, it manages to achieve the
+best of both worlds: it can deliver excellent overall performance (similar
+to SJF/STCF) for short-running interactive jobs, and is fair and makes
+progress for long-running CPU-intensive workloads.
+
