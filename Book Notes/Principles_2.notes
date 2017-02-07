@@ -56,3 +56,17 @@ memory system with names as sets of integers = !location addressed memory!
 2. A repertoire, which defines the set of actions the interpreter is prepared to perform when it retrieves an instruction from the location named by the instruction reference
 3. An environment reference, which tells the interpreter where to find its environment, the current state on which the interpreter should perform the action of the current instruction
 
+Multiple interpreters usually async, run on separate, uncoordinated clocks
+
+2.1.2.1 Processors
+This chapter has a ton of stuff about general purpose processors
+program counter
+directly wired into memory 
+instructions for expressing computations
+instructions to move data between processor registers and memory
+stack
+stack pointer
+program counter points to next program
+interrupts
+
+2.1.2.2 Interpreter Layers
