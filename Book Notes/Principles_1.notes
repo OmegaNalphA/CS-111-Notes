@@ -27,3 +27,19 @@ Jury example, descisions surprise observers
 PE: when small disruption has huge effects down the road
 - "There are no small changes in a large system"
 
+1.1.1.3 Incommensurate Scaling
+IS: as a system grows in size/speed, not all parts scale at the same time, breaks down
+- animals cant suddenly grow larger, since bone arrangement cant support weight in same way
+
+1.1.1.4 trade-offs
+TO: limited amount of some x, design challenge is to maximize, avoid waste, allocate in proper places. 
+
+1.1.2 Systems, Components, Interfaces, and Environments
+- A system is a set of interconnected components that has an expected behavior observed at the interface with its environment
+
+Under Discussion/No Discussion
+System = under Enviro = not 
+System = Solar System Enviro = Universe
+
+Interactions btwn system and environment = interface 
+

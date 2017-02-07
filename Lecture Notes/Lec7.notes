@@ -1,0 +1,133 @@
+2/6/17
+
+Scheduling:
+FCFS = fairer
+SJF = better average wait time ... 
+
+Fair?? Minimize standard deviation of wait times? Equal priorities??
+	- Real defn: No job waits forever ... can be implemented as a boolean
+
+Preemption & scheduling is one possible solution to be more fairer
+	- quantum = time between when we can reschedule (if a process takes longer than the quantum)
+	- in GNU/linux, we have 10 ms roughly
+One example is Round Robin = first come first serve with preemption
+
+A arrive 0, run 5
+B arrive 1, run 2
+C arrive 2, run 9
+D arrive 3, run 4
+
+Order: A, B, C, D, A, B (b done), C, D, A, C, D, A, C, D (d done), A (a done), C, C, C, C, C (C done)
+	- 0 wait time for A, B, C, and D (great average wait time)
+	- Average turnaround time = (15 + 5 + 18 + 11)/4 = 12.25 -> + 19 delta (bigger overhead than before)
+	- technically deltas of the CCCCC part will be smaller, but still some overhead
+Round robin can also have starvation ... solution is to put newly arrived job at the end of the queue 
+	- else lots of new jobs will come in the front and starve out things in the end
+
+Priority Scheduling: 
+	User-Assigned (static)
+	System-assigned (dynamic)
+"Niceness" is used to see which process is most or least greedy. 
+	- nice make linux
+	runs from (-19 to 19) ... 19 is best, -19 is greediest and needs more processing
+- nice -n -3 make linux (negative numbers are only for super users/root users)
+	- nicer processes are put later in the queue and get less CPU time ... so be greedier if possible
+	- bigger number is lower priority job
+
+Synchronization:
+	- Threads' biggest problem!!!
+	- Default is unsynchronized
+		- BUT things usually work anyways! ! because only a small time frame for things to crash
+
+Coordinating Actions in a shared address space is one way to avoid synch ... hard for large systems
+	- Maintain data consistency, 
+	- do so efficiently (utilization and latency)
+	- make it clear and simple
+Bugaboo: race conditions (races) ... CPU is faster than another
+Observability:
+	- System and outside world ... syscalls can load and store
+
+Old State loads to new state does getpid yet another state, and then stores for final state
+	- but in reality maybe not sequentially but rather 2 threads in parallel doing both
+	- serialization says the OS should conform to the spec ... can come up with a single step by step
+	explanation for what happened but might not actually be serial
+
+Isolation:
+	- actions X and Y are unrelated (St 1000, ld 2000)
+Atomicity:
+	- actions X and Y are related, but system arranges for either one to finish first before doing the other
+
+Example:
+unsigned long balance = 10000;
+2 functions: deposit (unsigned long amount){ balance += amt; }
+	- bool withdraw (unsigned long amt){if amt <= balance, then balance -= amt, return true. else return false }
+
+Thread 1 will deposit 10 dollars.
+Thread 2 will try to withdraw 20 dollars 
+movq balance, %rax
+addq $1000, %rax
+movq %rax, balance
+
+Movq balance, %rax
+cmpq $2000, %rax
+jl failure
+subq $2000, %rax
+movq %rax, balance
+
+Cannot write code like this ... if (balance + amount < balance = means synch error)
+Java has a keyword synchronized void deposit ... and synhronized boolean withdraw
+	- But how does JAVA do it?? ... everything in the method must be done all at once (make them atomic)
+Critical section is a section of your code that is all atomic 
+	- executed indivisably ... at most one thread's CP is in a critical section
+Don't want critical section too large (basically makes ur 8 core useless) (lost performance due to bottlenecking)
+	- but too small and you might not have capture enough of the possibilities of thread Safety
+1) To minimize critical secion you need to look for writing to shared states
+2) Lok for dependent reads that then used to grow critical sections 
+	- C has one flag called __button_addoverflow_p (balance amt)
+
+3) Reads to large objects will also cause errors if you put them not critical since it will take a long time to read or write data
+to these objects. you want them to be fully read or written to otherwise you will get race conditions
+ 
+footnote:
+	watch out for small objects toos
+struct{
+	unsigned int a:1;
+	unsinged int b:1;
+		t1
+	sa = true;
+	sb = true;
+}
+
+Even small objects should be made atmoic because load/store is atomic for 1, 2, 4, 8 bytes, but nothing else
+	- Must also be aligned as well ... everything else is not atomic so can be errors
+
+atomic operations are allowed to have benevolent side effects as long as update chancing is invidible to the user
+	- don't want two differnet insruction pointers in the same part for the same account, but ok for different accounts
+
+Critical section for two accounts at once (transwer function)
+	- or audit_all_accounts is a super critical section ... should lock out all other threads and users
+
+Enforcement of Critical Section:
+- Simple version, 1 CPU and syscalls for all actions (no preemption)
+	- every syscall is a critical section,  and no hardware traps (kinda like how a realtime system())
+IN Hardware, we can termporarily mask out interrupts (use SIGBLOCK to ignore signals)
+	- block and unblock interrupts is a primitive way to do critical sections!!
+More generally though, multiple CPUs have more of a problem
+	1) mutual exlcusion: if one processor is pointing in critical section, other thread from using that
+	2) Bounded wait: any thread in a critical section will exit it quickly. Prevents starvation
+
+Struct pipe {
+	char buf [1024 ... power of 2];
+	size_t r, w;
+};
+bool write (struct pipe*p, charc){
+	if (p->w & p->r == 1024) return false;
+	p-> buff[p>w++%1024] = C;
+	return true;
+}
+int read (struct pipe*p){
+	if (p->r == p->w) return -1;
+	return p-> buff[p->rH%1024];
+}
+we need more checks in this. If no data, return -1
+also make sure u dont write to a pipe that has already been writen to.
