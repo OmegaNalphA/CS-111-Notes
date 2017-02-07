@@ -12,7 +12,7 @@ Challenges
 ^competing challenges, high performance and maintain control
 
 Basic Technique- Limited Direct Execution
-LDE: Run all programs on cpu
+LDE: Run all programs on cpu, kernel mode/priveleges
 - run programs, then jump back to kernel and free memory
 
 Problems

@@ -18,7 +18,7 @@ Threads have
 	- context switch has same address space here than in PCB's
 
 In multi thread, there is one stack per thread 
-- therefore, any stack allocated variables will be in #thread local storage
+- therefore, any stack allocated variables will be in #thread local storage#
 - usually the space issue is fine, but watch out for recursion as the great number of stacks could outgrow and start rewriting other stacks
 
 26.1 Why Use Threads?
