@@ -84,3 +84,100 @@ Granularity: a component in one system is a entire system in another view
 - modularity, abstraction, layering, and hierarchy
 
 1.3.1 modularity
+Divide & Conquer
+
+#The unyielding foundations rule#
+- It is easier to change a module than to change the modularity
+
+Change one module at a time, dont need to consider full code 
+
+1.3.2 abstraction
+- little to no propagation of effects from one module to another
+
+abstraction: separation of interfce from internals, spec from implementation 
+functional modularity: modularity w/ abstraction
+
+#The robustness principle#
+- Be tolerant of inputs and strict on outputs.
+
+This is in tension with the =>
+#The safety margin principle#
+- Keep track of the distance to the cliff, or you may fall over the edge
+- track and report out of tolerance errors
+
+1.3.3 layering
+- good abstractions minimize number of interconnections
+layering: build on set of mechanisms that is already complete (lower layer)
+- module of a certain layer only interacts with its peers 
+
+Machine Language (low-level) implements C (higher level)
+
+gates/cells => processor & memory => app programs 
+
+layers are primary organizing technique for data comm networks
+
+1.3.4 hierarchy
+- small group of modules assembled into stable, self-contained system, well defined interface
+
+1.3.5 Putting it Back Together: Names Make Connections
+- use names to make connections to call other functions
+	- hardware bus address same idea
+- maximize flexibility by delaying binding till last possible moment
+
+#Decouple modules with indirection#
+- Indirection supports replaceability
+
+1.4 COMPUTER SYSTEMS ARE THE SAME BUT DIFFERENT
+Different from others by =>
+1) The complexity of a computer system is not limited by physical laws.
+2) The rate of change of computer system technology is unprecedented
+
+1.4.1 Computer Systems have no Nearby Bounds on Composition
+Digital systems are noise-free
+- can grow without bounds on noise 
+- implemented in bits, range of detection of 1 or 0 greater than expected
+	- This discipline is an example of being tolerant of inputs and strict on outputs
+
+Poss. 'Leakiness' of code
+
+= In contrast with other systems, computer systems allow composition to a depth whose first limit is the designer’s ability to understand
+
+1.4.2 d(technology)/dt is Unprecedented
+- tech changes way too fast 
+
+#The incommensurate scaling rule#
+- Changing any system parameter by a factor of 10 usually requires a new design.
+
+1.5 COPING WITH COMPLEXITY II
+
+1.5.1 Why Modularity, Abstraction, Layering, and Hierarchy aren’t Enough
+- designer really needs to know system 
+	- often, give and take can't optimize for all cases
+
+1.5.2 Iteration 
+- start with simple, working system that meets a small req. 
+	- then evolve system slowly 
+
+#Design for iteration#
+- You won’t get it right the first time, so make it easy to change
+
+- Take Small Steps
+	- dont commit too much, or something huge may break 
+- Don't Rush
+	- need to plan each Step
+- Feedback and Failures 
+
+#Keep digging#
+- Complex systems fail for complex reasons
+
+1.5.3 Keep it Simple 
+- previous systems give a taste of how great things could be if more features were added.
+- the technology has improved so much that cost and performance are not constraints.
+- each of the suggested new features has been successfully demonstrated somewhere.
+- none of the exceptions or other complications seems by itself to be especially hard to deal with.
+- there is fear that a competitor will market a system that has even more features.
+- among system designers, arrogance, pride, and overconfidence are more common than clear awareness of the dangers of complexity.
+
+#Adopt sweeping simplifications#
+- So you can see what you are doing.
+
