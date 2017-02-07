@@ -1,0 +1,29 @@
+Systems 
+
+Overview
+introduces computer design, systems perspective
+systems perspective: think about systems in global/encompassing way
+
+Design Principles throughout, will be marked with ##
+
+#Avoid Excessive Generality#
+- If it’s good for everything, it’s good for nothing
+
+1.1 Systems and Complexity
+1.1.1 Common Problems of Systems in Many Fields
+4 categories of Problems 
+1) emergent properties
+2) propagation of effects
+3) incommensurate scaling
+4) trade-offs
+
+1.1.1.1 Emergent properties
+EP: not evident in the individual components of system, show up when try to combine
+- some things only turn up when a system is built
+
+Jury example, descisions surprise observers 
+
+1.1.1.2 propagation of effects
+PE: when small disruption has huge effects down the road
+- "There are no small changes in a large system"
+
