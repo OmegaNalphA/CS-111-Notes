@@ -43,3 +43,44 @@ System = Solar System Enviro = Universe
 
 Interactions btwn system and environment = interface 
 
+Granularity: a component in one system is a entire system in another view
+
+1.1.3 Complexity
+5 signs of Complexity
+1) large num of components
+2) Large num of interconnections
+3) Many Irregularities
+4) A long description
+5) A team of designers, implementers, or maintainers
+
+1.2 Sources of Complexity
+- num of requirements designer expects system to meet
+- maintaining high utilization
+
+1.2.1 Cascading and Interacting Requirements
+- list of reqs. of system show how complex is, now matter how simple reqs. are 
+
+#Principle of escalating complexity#
+- Adding a requirement increases complexity out of proportion.
+
+- as number of requirements grows, gets exponentially worse to work
+
+#Avoid Excessive Generality#
+- If it’s good for everything, it’s good for nothing
+
+- make features general enough to minimize number of exceptions
+
+- change in environment or requirements could trigger complexity
+
+1.2.2 Maintaining High Utilization 
+- whenever a scarce resource is involved, effort to keep utilization high
+
+#The law of diminishing returns#
+- The more one improves some measure of goodness, the more effort the next improvement will require.
+
+- Higher utilization, higher complexity exponentially
+
+1.3 COPING WITH COMPLEXITY 1
+- modularity, abstraction, layering, and hierarchy
+
+1.3.1 modularity
