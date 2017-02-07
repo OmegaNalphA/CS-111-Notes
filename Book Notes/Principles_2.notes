@@ -1,0 +1,58 @@
+Elements of Computer Organization
+
+Overview
+Main Abstractions
+- memory
+- interpreter
+- comm link
+
+- only hardware Abstractions proven to actually be useful
+
+Abstract components interact by !Reference!
+use !name! to connect components
+
+2.1 THE THREE FUNDAMENTAL ABSTRACTIONS
+
+2.1.1 Memory 
+Memory = Storage
+All models fit abstract model of 
+- WRITE(name, val) and val <- READ(name)
+
+Volatie Memory: mechanism for retaining info consumes energy, can be erased 
+Non-Volatile (stable) Memory: retains content even when power dies
+
+2.1.1.1 Read/Write Coherence and Atomicity
+- read/write coherence & before-or-after atomicity.
+
+coherence: result of read will always be same as most recent write to that cell
+before-or-after atomicity: as if READ OR WRITE occured either completely before or completely after another READ OR WRITE
+- though seems common, is way less common than youd think 
+
+1) Concurrency 
+- need to be some way to decide what process acting on which blocks
+2) Remote Storage
+- delays of relaying info, don't know which WRITE most recent etc. 
+3) Performance Enhancements 
+- poss. reorder of memory operations, therefore fails atomicity
+	- memory barrier function
+4) Cell size incommensurate with value size
+- large value takes up a ton of blocks/cells 
+5) Replicated Storage
+- multiple copies of values, which one to use?
+
+2.1.1.2 Memory Latency
+latency: access time, time takes to access memory
+- can solve with large block read and writes
+
+2.1.1.3 Memory Names and Addresses
+address: consecutive integer names signifying geometric location in Storage
+memory system with names as sets of integers = !location addressed memory!
+
+2.1.1.4 Exploiting the Memory Abstraction: RAID 
+- basically a way to split up disks to get different maximizations of performance 
+
+2.1.2 Interpreters
+1. An instruction reference, which tells the interpreter where to find its next instruction
+2. A repertoire, which defines the set of actions the interpreter is prepared to perform when it retrieves an instruction from the location named by the instruction reference
+3. An environment reference, which tells the interpreter where to find its environment, the current state on which the interpreter should perform the action of the current instruction
+
