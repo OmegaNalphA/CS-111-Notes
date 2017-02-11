@@ -1,0 +1,96 @@
+Chapter 28
+
+Locks
+
+Essential problem, we want to execute atomically but interrupts on single processor doesnt let us
+lock solves this ^
+This mainly goes around critical sections
+
+#28.1# Locks, The Basic Idea
+Critical section refered to is 
+	
+	[c]
+	balance = balance + 1;
+	[end]
+	want to keep it simple for now but has a lot of complications poss 
+
+We can add a lock around the section
+[c]
+1 lock_t mutex; // some globally-allocated lock ’mutex’
+2 ...
+3 lock(&mutex);
+4 balance = balance + 1;
+5 unlock(&mutex);
+[end]
+
+A lock is just a variable (in this case mutex)
+- holds state of lock at a given time
+- available or acquired(open or closed)
+
+Essentially, call the lock() function and if mutex is available then can enter critical section
+- but if acquired, lock will not return until it can aquire 
+- !this is how locks work! not just by checking the value, but not allowing thread execution
+
+#28.2# Pthread Locks
+Pthread uses mutex, version below
+[c]
+1 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+2
+3 Pthread_mutex_lock(&lock); // wrapper for pthread_mutex_lock()
+4 balance = balance + 1;
+5 Pthread_mutex_unlock(&lock);
+[end]
+
+coarse grained: locking strategy that uses one big lock every time any critical section is accessed
+fine grained: locking strategy to have different locks for different data
+
+#28.3# Building a Lock
+We can use hardware primitives to help us out
+
+#28.4# Evaluating Locks 
+How to evaluate locks
+1) Does the lock provide mutual exclusion?
+- prevent multiple threads from accessing critical section
+2) Fairness
+- Does each thread going for the lock have a fair shot at acquiring
+- Does any thread starve?
+3) Performance
+- what is the overhead of a single thread grabbing the lock vs. multiple
+
+#28.5# Controlling interrupts
+Earliest implementation, ignore interrupts for critical section
+- Pro
+	- gives us rough atomicity
+- Con 
+	- Forces us to make every calling thread have a priveleged operation
+	- Trust that wont abuse all of the hardware instructions
+	- This does not work on multiprocessors 
+		- threads could enter critical section on other processors 
+	- losing interrupts
+	- very inefficient code
+
+First Attempt, A Simple Flag
+[c]
+1 typedef struct __lock_t { int flag; } lock_t;
+2
+3 void init(lock_t *mutex) {
+4 // 0 -> lock is available, 1 -> held
+5 mutex->flag = 0;
+6 }
+7
+8 void lock(lock_t *mutex) {
+9 while (mutex->flag == 1) // TEST the flag
+10 ; // spin-wait (do nothing)
+11 mutex->flag = 1; // now SET it!
+12 }
+13
+14 void unlock(lock_t *mutex) {
+15 mutex->flag = 0;
+16 }
+[end]
+
+#Test and Set (Atomic Exchange)
+Since Disabling interrupt doesnt work on multiprocessors
+- invented hardware support for locking
+
+test and set instruction/atomic exchange comes in
