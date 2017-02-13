@@ -94,3 +94,5 @@ Since Disabling interrupt doesnt work on multiprocessors
 - invented hardware support for locking
 
 test and set instruction/atomic exchange comes in
+
+!NOT FINISHED!

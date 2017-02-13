@@ -1,0 +1,220 @@
+2/13/2017
+
+[c]
+#define N 1024
+mutex_t m;
+struct pipe{
+	unsigned char buf[N];
+	size_t r,w;
+}
+
+bool writec(struct pipe *p, char c);\{
+	//disable_int();
+	lock(&m);
+	if(p->w - p->r == N) { /*enable_int();*/ return 0; }//returned, but interrupts are still disabled!
+	p-> buf[p->w++%N] = c;
+	unlock(&m);
+	return 1;
+	//enable_int();
+}
+
+int readc (struct pipe *p){
+	//disable_int();
+	lock(&m);
+	if(p->w - p->r == N) { /*enable_int();*/ return EOF; }
+	int x = p-> buf[p->r++%N];
+	//enable_int();
+	unlock(&m);
+	return x;
+}
+[end]
+
+Implementing Crit Sections on a uniprocessor
+Only problem is the interrupts,
+- disable in critical Sections
+- Doesn't rlly work well in multi core CPUS
+
+api for answer!
+[c]
+typedef int mutex_t;
+void lock(mutex_t *m);//precondition, don't own lock
+void unlock(mutex_t *m);//precondition, own lock
+[end]
+
+Coarse Grained Locking
+- force mutex at every critical Section
+- often creates a huge bottle neck bc this affects all pipes
+- solve this by making mutex a member variable of each pipe
+
+[c]
+struct pipe{
+	unsigned char buf[N];
+	size_t r,w;
+	mutex_t m; //finer grain locking
+}
+
+bool writec(struct pipe *p, char c);\{
+	//disable_int();
+	lock(&p->m);
+	if(p->w - p->r == N) { unlock(&p->m); /*enable_int();*/ return 0; }//returned, but interrupts are still disabled!
+	p-> buf[p->w++%N] = c;
+	unlock(&p->m);
+	return 1;
+	//enable_int();
+}
+
+int readc (struct pipe *p){
+	//disable_int();
+	lock(&p->m);
+	if(p->w - p->r == N) { unlock(&p->m); /*enable_int();*/ return EOF; }
+	int x = p-> buf[p->r++%N];
+	//enable_int();
+	unlock(&p->m);
+	return x;
+}
+[end]
+
+implementation of lock/unlock
+[c]
+/*
+void lock(int *m){
+	*m = 1;
+}
+
+void unlock(int *m){
+	*m = 0;
+}
+*/
+
+void lock(int *m){
+	while(*m)
+		continue;
+	*m = 1;
+}
+//assumes precondition that we own lock, so it's fine
+void unlock(int *m){
+	*m = 0;
+}
+[end]
+
+Intel says,
+- loads & stores are atomic for aligned address-multiple-of-size (32) words only
+- lock incl x <- memory address 
+	- adds 1 to x atomically 
+
+[c]
+void lock_incl(int *p){
+	asm(incl lock%......)
+	//some assembly language => *p++;
+}
+[end]
+
+xchgl %eax, %edx
+- update and return old value
+
+[c]
+int xchgl(int* p, int v){
+	int ov = *p;
+	*p = v;
+	return ov;
+}
+[end]
+
+Now we have these hardware instructions, we can implement lock better
+[c]
+void lock(int* m){
+	//if returns 1, someone else has lock. Once returns 0, we toggled the value so we have lock now
+	while(xchgl(m, 1))
+		continue;
+}
+
+//assumes precondition that we own lock, so it's fine
+void unlock(int *m){
+	*m = 0;
+}
+[end]
+
+How to make functions atomic?
+
+[c]
+compare_and_swap(int* v, int o, in n){
+	if(*v == 0){
+		return 1; //<^these two lines are a single instruction atomically
+	}
+	return 0;
+}
+
+for(;;){
+	int y = f(x);
+	if(cas(&x, x, y)){
+		break;
+	}
+}
+[end]	
+
+Hardware Lock Elision (Intel Haswell Architecture)
+
+lock: movl $1, %eax
+try:  xacquire lock xchgl %eax, %rbx
+	  cmpl $0, %eax
+	  jnz try
+	  ret
+
+unlock: xrelease movl $0,%rbx
+		ret
+
+Avoid Polling with Blocking mutex
+- try to get lock, if you can't go to sleep
+	- wait for lock to become available
+	- can be implemented atop spin locks
+
+[c]
+typedef struct bmutex{
+	mutex_t m;
+	bool locked;
+	struct process *waiting, **waiting_tail;//pointer to linked list of processes that are waiting on this mutex to stop, can be null terminated
+}bmutex_t;
+
+void acquire(bmutex_t *b){
+	lock(&b->m);
+	if(!b->locked){
+		b->locked = 1;
+		unlock(&b->m);
+		return;
+	}
+	self->next = NULL;
+	*b->waiting_tail = self;
+	b->waiting_tail = &self->next;
+	unlock(&b->m);
+	yield(); //let someone else run
+}
+
+void release(bmutex_t *b){
+	lock(&b->m);
+	b->locked = 0;
+	proc *p = b->waiting;
+	if(p){
+		p->blocked = false;
+		b->waiting = p->next;
+		if(!b->waiting){
+			b->waiting_tail = &b->waiting;
+		}
+	}
+	unlock(&b->m);
+}
+[end]
+
+The problem with this implementation for pipes is the OS doesnt know why im going to sleep after writing
+- can't distinguish operations, when to read?
+
+This is what we rlly want, wake up when no one uses pipe && pipe is full!
+otherwise pipe will be constantly polling.
+[c]
+acquire(&p->m);
+if(p->w - p->r == N){
+	release(&p->m);
+	yield("until p->w - p->r != N");
+}
+[end]
+
+This is where condition variables come in 
