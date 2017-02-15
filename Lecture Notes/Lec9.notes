@@ -1,0 +1,201 @@
+2/15/2017
+
+Condition Vars API:
+void wait (condvar_t *c, bmutex_t *b); 		represents boolean expression that "the pipe is full"
+	- precondition is b is already acquired
+	- releases b, blocks until some other process notifies
+	- reacquires b, then returns
+notify cond(condvar_t *c);
+broadcastCond(condvar_t *c);
+
+[c]
+struct pipe {
+	char buf[8192];
+	size_t r, w;
+	bmutex_t b;
+	condvar_t pipe_is_full;
+	condvar_t pipe_is_empty;		// used for READING
+}
+
+void write(struct pipe *p, charc){
+	acquire (&p->b);
+	while(p->w - p->r == 8192)
+		wait(&p->pipe_is_full, p->b);
+	p->buf[p->w++%8192] = c;
+	release(&p->b);
+	notify_cond(!&p->pipe_is_empty);
+}
+[end]
+
+Semaphores are blocking mutexes but with an int (not a boolean) that represents the amount or number of resources available
+	- eg = 10 simultaneous users
+	- P down acquire .... P(&s) 	prolaag (dutch) for try and decrease
+	- V up release 					verhoog (dutch) "increment"
+
+DeadLock:
+cat 	read(0, &buf, 512); 	write (1, &buf, 512);
+		copy(0, 1, 512);
+
+Deadlocks are a pain
+- only happen a few times but still an issue
+- happens when so many locks that nothing happens
+
+Deadlock is a race condition
+- 4 conditions to get a Deadlock
+1) circular wait 
+- constant cycle of waiting for each process to release something
+- process could start waiting for self
+2) mutual exclusion
+- if one thing has an acquired resource, no one else can access
+3) no preemption of locks
+- If preemption offered, no Deadlock
+- basically opportunity to break the lock and force threads off
+4) Hold and Wait 
+- holding one resource while waiting for another to be available
+- if only 1 lock at a time its fine, but multiple locks for one thread simultaneously is killer
+
+If and of these conditions is prevented, deadlock is broken
+
+#Detecting Deadlocks Dynamically#
+Here, the OS tracks every process and the resources they hold or are trying to hold. It builds a directed graph and makes sure it’s acyclic. If a cycle were to be established based on the new arc, then the lock request will be rejected, giving an error status like EDEADLOCK for lock().
+
+The kernel is helping applications, but apps must now be modified to watch out for deadlock
+
+Deadlock is over-synchronization
+- everything gets jammed up 
+- can get more complicated though, example 
+
+Parent process that forks a child
+sends data there by pipe, gets results back through another pipe
+They both have buffers trying to write to each other
+P- write(small command); write(small command);
+c- read(small command); write(large result); hangs
+=> still have to worry about poss of deadlock
+=> but develop as if it doesnt exist
+	- only way to stop deadlocks is by understanding whole system
+
+New Bug: Priority Inversion (Mars Pathfinder 1997)
+3 threads/Priority
+T-low T-med T-high
+	- T-high is super priority, bug fixes etc
+	- T-med is science stuff, is important but eh 
+	- T-low is like battery, is also import but meh dont really care
+
+If we start with T-low being the only runnable thread 
+All of a sudden, there's a context switch to T-high
+T-high wants the resource from T-low, but its blocked and yields
+T-medium comes in and starts running, and T-low is hung 
+!Because T-low is hung, T-high is hung as well!
+
+Some Solutions to help
+1) Lock preemption, but can corrupt the data
+2) Keep track of who had the lock 
+	- if someone with higher priority wants lock, run low priority with priority of calling thread so it will finish faster 
+	- this way no starvation and runs faster 
+
+This is kind of crazy, talking so much about threading in such simple sections
+Needs to be a better way
+
+Our Saviour: Event Driven Programming
+Very popular in embedded systems
+
+[c]
+for(;;){
+	e = get_next_event();
+	handle_event(e); //<-this must finish quickly!
+}
+[end]
+
+Event handlers have to be very fast 
+
+Essentially, EDP is the inverse of threads
+Completely single-threaded system
+- use asynch events instead
+
+The thing is, this does not scale to multi-core
+- if want scaling, many single cores communicate via network
+
+While no Deadlock, EDP does not kill all race conditions
+Biggest Example is Livelock
+
+Livelock: CPU is always doing something, but nothing useful is happening
+Specifically, receive Livelock
+
+requests are coming in from external place
+
+|------	capactity 
+|		(actions/sec)
+|______	work done y axis
+load ->
+requests/sec
+
+Want it such that we work until we hit capacity and work at capacity optimally 
+   ----------
+  /
+ /
+/
+
+but often, in EDP this process goes to 0
+     .-----.
+    /       \
+   /         \  
+  /           \
+ /             \
+
+
+ Scenario, the overhead of all the subevents after the handle event call ends up killing overhead of getting event
+ This is called #receive livelock#
+
+ Solution: be disciplined about which requests to handle
+ Discard events more enthusiastically 
+ - disable interrupts when the system is loaded 
+
+ Talkin' bout file systems
+ 120 PB = 120000 TB
+ 200000 drives each 600 GB
+ gpfs: General parallel file system
+
+Distributed metadata
+The data about the data locations is distributed 
+metadata: the result of ls -l
+--rwrrrx anshul hello-------
+
+Needs to be distributed since if everyone wants to ask about it, then it wont be returned
+Multiple copies of the metadata
+- this way we can ask about metadata then find the file, makes it more efficient and can ask from cache
+
+Efficiend Directory Indexing
+
+lets say we have a directory containing 20,000,000 subfiles
+- pls don't run ls
+
+dir representation is essentially an array of entries 
+entries are name: pointer-to-file:
+
+if call ls on this, read name of all of them, then go back through and linearly search through the directories
+GPFS solves this with smarter indexing pf directories
+
+We want to retain ability to create and delete files, but still find files fast 
+
+So instead of an array or hash table (which sucks at sorting) or a balanced binary tree (too bushy), we use a B+ tree, an n-ary tree with a large number of children per node.
+
+--Distributed Locking--
+We want to be able to make changes atomically 
+- essentially have a distributed system of nodes that handles different parts
+- super complicated, beyond scope of current lecture
+
+--Partition Awareness--
+Even when network is split up into a ton of nodes, want to know when any part is cut 
+- Solution, count how many nodes on each side of partition. Larger one keeps read/write ops while smaller one can only read
+
+--File system stays up during maintainence--
+- linux has file system check (fsck)
+- checks for errors in FS and tries to repair them 
+	- if it is under maintainence DO NOT TOUCH IT 
+	- reading is ok but writing is nono 
+	- theoretically should do it during boot 
+- takes too long to read all the data at once 
+	- made it robust so it can be fixed while live
+
+Today's lecture was supposed to be about File System Performance
+- get to it later
