@@ -1,0 +1,126 @@
+Chapter 40
+
+File System Implementation
+
+Introduce a simple file system called vfs (Very Simple File System)
+
+#40.1# The Way to Think
+1) Data Structures
+What types of on disk structures are used by the fs to organize data and metadata?
+2) access methods
+How does it map system calls and where?
+
+#40.2# Overall Organization
+Develop on-disk organization of the data structures of fs
+- divide disk into blocks
+	- use one block size, use 4 KB in this case 
+
+Block are in 0 - N-1 in a partition of 4kb blocks
+- look at 64 block model
+
+data region: region of disk used to store user data
+- lets use last 56/64 blocks for data 
+
+fs has to track inodes which is a part of the metadata 
+inode table: region of data to hold on-disk inodes 
+- use 5/64 blocks for inode table 
+- inodes are p small, 128 or 256 bytes
+- number of inodes defines maximum number of files possible 
+
+allocation structures: way to keep track of blocks data as freed or allocated
+free list: points to the first free block, then points to the next etc 
+Instead we choose bitmap one for data region (data bitmap) and one for inode (inode bitmap)
+bitmap: each bit corresponds with block use 0 for free 1 for in-use
+- takes up less than 4 KB but might as well say it takes up 4 for simplicity
+
+Last block goes to the Superblock
+superblock: contains info about fs, like number of inodes and datablocks in fs where the inode table starts etc
+- also contains number to denote fs type 
+- this is called first when mounting, so the fs knows where to look for the files it needs 
+
+#40.3# File Organization, The Inode 
+inode: index node, used to be in an array and the array index into it when accessing a particular inode
+
+Each inode is referenced by number (inumber), earlier called low-level name
+- should be that given an i-number, we should be able to calculate where on disk the inode is located
+[c]
+blk = (inumber * sizeof(inode_t)) / blockSize;
+sector = ((blk * blockSize) + inodeStartAddr) / sectorSize;
+[end]
+
+Size Name 	What is this inode field for?
+2 	mode 		can this file be read/written/executed?
+2 	uid 		who owns this file?
+4 	size 		how many bytes are in this file?
+4 	time 		what time was this file last accessed?
+4 	ctime 	what time was this file created?
+4 	mtime 	what time was this file last modified?
+4 	dtime 	what time was this inode deleted?
+2 	gid 		which group does this file belong to?
+2 	links_count 	how many hard links are there to this file?
+4 	blocks 	how many blocks have been allocated to this file?
+4 	flags 	how should ext2 use this inode?
+4 	osd1 		an OS-dependent field
+60	block 	a set of disk pointers (15 total)
+4 	generation 	file version (used by NFS)
+4 	file_acl 		a new permissions model beyond mode bits
+4 	dir_acl 		called access control lists
+^ Simplified Ext2 Inode, meta data 
+
+Importat descision, how to reference data?
+- can use direct pointers to location, but if huge file its tough
+
+--Multi Level Index--
+To handle larger files, need a different structure within inodes 
+indirect pointer: instead of pointing to block with user data, points to block with more pointers that has user data 
+- if file is large enough then indirect block is allocated from data-block region of disk 
+- can keep this up forever for humungous files 
+
+This is referred to as a multi level index 
+Certain truths that hold 
+- most files are small, makes sense to optimize for this case 
+- average file size is growing 
+- most bytes are stored in large files 
+- file systems contain a lot of files 
+- file systems are roughly half full 
+- directories are typically small 
+
+#40.4# Directory Organization
+Directory is basically a list of entry names and inumbers 
+Deleting file may cause an empty space, so we use inumber 0 to denote
+
+#40.5# Free Space Management 
+- tracks what data is free to allocate 
+uses a pre-allocation policy where it looks for a sequence of 8 blocks that are free 
+
+#40.6# Access Paths: Reading and Writing 
+flow of operation for reading or writing a file 
+
+--Reading a File from Disk--
+open file /foo/bar read it, close it only 4 kb big
+issue open, fs needs to find inode of file bar 
+- traverses pathname to find desired inode 
+	- traversal starts at root directory, reads the inode there
+		- roots inode number is 2, first inode block essentially 
+	- looks inside to find data blocks, goes from there 
+- recursive system until it finds the file 
+- a lot of overhead if the directories are large or the path is long 
+
+--Writing to Disk--
+Similar to above, but possibly allocates blocks as necessary 
+generates five I/O's
+1) read data bitmap
+2) write to bitmap
+3) read inode 
+4) write inode 
+5) writes to the block 
+
+Have to repeat this to grow data/directories size as necessary 
+
+#40.7# Caching and Buffering 
+fixedsize cache: early way of holding popular blocks 
+- static partitioning of memory could be wasteful 
+
+dynamic partitioning: integrate virtual memory pages and fs pages into unified page cache
+- more flexible 
+
