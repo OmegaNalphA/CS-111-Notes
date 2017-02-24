@@ -97,3 +97,59 @@ Usually this info is contained in the inode struct
 use the unlink() command, to understand we need to know more about directories
 
 #39.10# Making Directories 
+Create Read and Delete directories, but cannot directly write to the directory
+mkdir()
+
+#39.11# Reading Directories
+Can't open just like a file, use opendir(), readdir(), closedir()
+[c]
+struct dirent {
+char d_name[256]; /* filename */
+ino_t d_ino; /* inode number */
+off_t d_off; /* offset to the next dirent */
+unsigned short d_reclen; /* length of this record */
+unsigned char d_type; /* type of file */
+};
+
+int main(int argc, char *argv[]) {
+DIR *dp = opendir(".");
+assert(dp != NULL);
+struct dirent *d;
+while ((d = readdir(dp)) != NULL) {
+printf("%d %s\n", (int) d->d_ino, d->d_name);
+}
+closedir(dp);
+return 0;
+}
+[end]
+
+ls -l calls the stat() option to get more data
+
+#39.12# Deleting Directories
+rmdir() -> directory has to be empty
+
+#39.13# Hard links
+link() -> link a new file name to an old one 
+Creates a name in the directory, and links it to the same inode number of the original file 
+2 human readable names, 1 actual file referenced 
+when making a file 2 things happen:
+1) make structure that tracks all relevant info (inode)
+2) link a human readable name to that structure 
+When rm a file thats been linked, can still access from the second one
+- there is a number to check how many links something has, only really deleted when hits 0
+
+#39.14# Symbolic links
+can't create hardlink to directory in case it causes a loop in directory tree
+can't hardlink to files in other disk partitions since inodes are only unique within a file system
+
+ln -s
+A symbolic link is a file in and of itself
+basically holds the pathname of the linked to file
+
+dangling refernce: where the original file is removed causing a link to point to a path that doesnt exist 
+
+#39.15# Making and Mounting a File System
+mkfs: makes file system
+- give disk partition, and a fs type 
+
+mount: takes existing directory as !mount point! and pastes the new file system on the tree at that point
