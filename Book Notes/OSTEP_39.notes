@@ -1,0 +1,40 @@
+Chapter 39
+
+Interlude: Files and Directories
+
+Already covered #process virtualization of CPU# and #address space virtualization of memory#
+
+Add one more piece
+!Persistent Storage! 
+- hard disk drive/SSD
+
+#39.1# Files and Directories
+file: linear array of bytes to read and write from
+- has low-level name usually a number of somekind
+	- user not usually aware of the name
+inode number: the low-level name of the file 
+
+directory: also has an inodenumber, contains list of (user-readable name, low-level name) pairs
+- can use to build directory tree of files 
+
+root directory: start of directory tree (/) in unix
+- uses separator to name sub-directories
+absolute pathname: foo/bar.txt
+- files and directories can have same name as long as in diff places
+
+name (.) type -> how to identify files, just a convention no real enforcement
+
+#39.2# File System Interface 
+creating accessing and deleting files 
+unlink() <- mysterious way to delete files rn 
+
+#39.3# Creating Files
+using the open system call and the O_CREAT flag 
+[c] int fd = open("foo", O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR); [end]
+O_CREAT: creates file if not exist
+O_WRONLY: only able to be written to 
+O_TRUNC: Truncates to 0 bytes 
+important part is that this returns a file descriptor 
+capability: an opaque handle that gives you the power to perform certain operations
+
+#39.4# Reading and Writing Files

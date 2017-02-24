@@ -1,0 +1,87 @@
+Chapter 37
+
+Hard Disk Drives
+
+Hard Disk: Main form of persistent data storage
+
+#37.1# The Interface
+Drive consists of sectors
+- 512 Byte Blocks r/w
+
+Only single 512 byte write at a time is guaranteed !atomic!
+torn write: power loss or interruption, only a portion of larger write corrupted
+
+"unwritten contracts" of disk Drives
+- accessing two chunks next to each other is fastest
+- contiguous chunk is fastest access mode
+
+#37.2# Basic Geometry
+platter: a circular hard surface on which data is stored persistently by inducing magnetic changes to it.
+- one or more in disk, each platter has 2 surfaces/sides
+
+All bound together around #spindle# connected to motor that spins platters around
+- 7.200~15000 RPM
+
+Data encoded on concentric circles on a surface, on part is called a track
+
+Disk Head: reads each track
+Disk Arm: Position Disk Head
+
+#37.3# A Simple Disk Drive 
+Assumption, Single disk with Single track
+12 Sectors, 512 bytes each
+
+--Single Track Latency The Rotational Delay--
+Rotational Delay: time it takes to rotate disk head from current sector to another sector
+
+--Multiple Tracks Seek Time--
+Seek Time: Moving disk arm to correct track 
+Settling Time: After moving arm, stopping arm, and settling head on correct track 
+- about 0.5 to 2 ms
+transfer: data gets written or read 
+
+--Some other Details--
+Track Skew: Needs time to move so disk sectors are slightly offset
+Multi Zoned: Disk is organized into zones of consecutive tracks
+- outer tracks have more sectors
+
+cache: AKA Track Buffer, small amount of data drive uses to hold data
+write back: immediate reporting caching when data is put in memory of cache
+write through: When its actually finish writing it reports complete
+- write back is dangerous, makes it seem faster even if it really isnt
+
+#37.4# I/O Time, Doing the Math
+This goes into an in-depth discussion of the physical restraints of disk drives.
+If you would like to learn more read the chapter!
+
+#37.5# Disk Scheduling
+OS decides order of I/O's to disk.
+Disk Scheduler: examines requests and executes them
+- unlike job scheduling, we have rough idea of how long a job will takes
+Use Shortest Job First (SJF)
+
+--SSTF Shortest Seek Time First--
+Orders the queue of I/O requests by track, picking by nearest track 
+- Don't necessarily know drive geometry though, just sees array of Blocks
+- Solved with nearest block first instead of track 
+
+- very keen on starvation though 
+
+--Elevator aka SCAN or CSCAN--
+Moves back and forth across disk servicing requests in track order
+- sweeps across disk continually, has queue for each track
+F-SCAN: freezes queue while sweeping, avoids starvation 
+C-SCAN: Circular Scan, only sweeps from outer to inner then resets 
+- bit more fair 
+- both SCAN and SSTF ignore rotation and movement costs 
+
+--SPTF Shortest Positioning time First--
+Uses shortest positioning time, combination of all of them 
+- usually performed inside drive since OS cant handle it since it doesnt know geometry
+
+--Other Scheduling Issues--
+Where does all the disk scheduling occur?
+- on disk nowadays, p complicated interface 
+
+#37.6# Summary
+This is just an overview, disks are much more complicated 
