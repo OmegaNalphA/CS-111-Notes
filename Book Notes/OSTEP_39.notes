@@ -38,3 +38,62 @@ important part is that this returns a file descriptor
 capability: an opaque handle that gives you the power to perform certain operations
 
 #39.4# Reading and Writing Files
+The book goes into a deep description of how strace and cat work with file descriptors
+
+#39.5# Reading And Writing, But Not Sequentially
+Use lseek
+[c]off_t lseek(int fildes, off_t offset, int whence);[end]
+1) file descriptor 2) offset in file 3) how the seek is performed,"whence it came"
+!This does not perform a disk seek, only local things changed!
+
+#39.6# Writing Immediately with fsync()
+write() just asks to write sometime in the near future
+fsync(int fd) forces all buffered writes for that file to be written Immediately
+[c]
+int fd = open("foo", O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR);
+assert(fd > -1);
+int rc = write(fd, buffer, size);
+assert(rc == size);
+rc = fsync(fd);
+assert(rc == 0);
+[end]
+
+#39.7# Renaming Files 
+usually rename(char* old, char* new) is atomic, mv command uses it 
+can use to create a temp file, then atomically update new file
+[c]
+int fd = open("foo.txt.tmp", O_WRONLY|O_CREAT|O_TRUNC,
+S_IRUSR|S_IWUSR);
+write(fd, buffer, size); // write out new version of file
+fsync(fd);
+close(fd);
+rename("foo.txt.tmp", "foo.txt");
+[end]
+
+#39.8# Getting Info about Files
+The FS stores a lot of metadata, use stat() or fstat()
+fill in stat() struct here ->
+[c]
+struct stat {
+dev_t st_dev; /* ID of device containing file */
+ino_t st_ino; /* inode number */
+mode_t st_mode; /* protection */
+nlink_t st_nlink; /* number of hard links */
+uid_t st_uid; /* user ID of owner */
+gid_t st_gid; /* group ID of owner */
+dev_t st_rdev; /* device ID (if special file) */
+off_t st_size; /* total size, in bytes */
+blksize_t st_blksize; /* blocksize for filesystem I/O */
+blkcnt_t st_blocks; /* number of blocks allocated */
+time_t st_atime; /* time of last access */
+time_t st_mtime; /* time of last modification */
+time_t st_ctime; /* time of last status change */
+};
+[end]
+Usually this info is contained in the inode struct
+- for now, persistent data structure kept by file system that has the info above inside of it 
+
+#39.9# Removing Files 
+use the unlink() command, to understand we need to know more about directories
+
+#39.10# Making Directories 
