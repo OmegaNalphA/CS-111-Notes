@@ -256,4 +256,20 @@ guarantees all threads get a chance in the queue
 Spin spin spin how to solve?
 
 #28.13# A Simple Approach: Just Yield, Baby
-!NOT DONE!
+When about to spin, just give up to another thread 
+
+Important stuff, changes thread from running to ready
+- essentially it deschedules itself
+- Problems, cost of context switching still high and starvation 
+
+#28.14# Using Queues: Sleeping Instead Of Spinning
+Implement a queue to make it easier for starvation to stop
+
+#28.15# Different OS, Different Support 
+Linux futex, use to sleep and wake as need be
+futex_wake(mutex) 
+
+#28.16# Two-Phase Locks 
+Two-Phae Lock: Spinning can be useful, if lock is about to be released
+- lock spins for a little bit, then gets put to sleep in second phase
+

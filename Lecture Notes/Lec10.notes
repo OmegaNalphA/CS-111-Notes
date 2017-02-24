@@ -1,0 +1,136 @@
+2/22/2017
+
+File Systems:
+
+GPFS: General Parallel File System
+	- Distributed metadata: metadata stored on multiple disks
+	- Efficient directory indexing: use an n-ary tree
+	- Distributed locking: no single node "owns" an object
+	- Partition awareness: FS aware of partition. clients on each side can essentially operate independently
+	- File system stays up during maintenance
+
+File System:
+
+Organization
+Robustness
+Performance
+
+--- Performance ---
+
+	- Throughput, bytes/sec, I/O
+	- Utilization (0-1)
+	- Latency (delay)
+		. How long you have to wait before you get access to a file
+
+	. Typically, improving throughput hurts latency, et vice versa
+	. Balance between the two
+
+File system devices
+
+	Hard disks: 300 Mb/s external data rate (peak rate, data rate of controller)
+				95 Mb/s sustained data rate (rate for sustained readign)
+				32 MB cache
+				5.5 ms avg latency (random access)
+				5900 RPM spindle speed (±98.33 Hz)
+				512 bytes sector
+				50,000 contact starts/stops (how many times the drive can turn off)
+				10^14 non recoverable read erros/bit (1/10^14 chance a bit will be corrupted)
+				0.32% AFR (annualized failure rate) (if drive was running for a year, chance the entire disk fails)
+				6.8 W avg operation, 5.5 W idle
+				2 A startup current
+				70 g operating shock
+				300 g non operating shock
+				2.5 bels acoustic output
+				2 TB capacity
+	Flash: 
+		60 GB capacity
+		3 Gb/s
+		1000g shock
+		7 W
+		2 Gb/s I/O r/w
+		50k IOPS (4k writes) (200 MB/s)
+		Flash wears out
+
+Techniques for performance
+	- Batching
+		. r/w continguous sector - low level
+		. getchar reads into buf - high level
+	- Dallying
+		. wait for a bit before doing requests so you can batch them
+	- Speculation
+		. Prefetching
+			- grab data from device before it's needed
+		. guess what IO will happen next
+		. Assume locality of reference
+			- Spatial locality
+				. Accessing address i means accessing i+1 is likely
+			- Temporal locality
+				. Accessing at time t means accessing at time t+1 is likely
+
+
+--- Organization ---
+
+RT-II FS - made by eggert as a kid
+
+ _________________________
+|///	file	///	 file|
+ _________________________
+
+In first part, was directory
+array of director entries
+each entry looks like:
+
+	name of file|start location(sector num)|num bytes
+
+	files are continguous
+		+ simple
+		+ throughput
+		- pain to grow
+		- fragmentation
+
+	internal fragmentation:
+		storage assigned to file but not used
+		worse case: 1 bit. 511/512 will be unused
+
+	external fragmentation:
+		free storage capacity is enough, but it's scattered, so no big files anymore
+
+
+FAT (File Allocation Table)
+
+(boot sector) | (superblock/version/size/used) | (FAT) | (data)
+
+FAT array
+	entries are block numbers
+	stores block number of next block after i in current file
+	0 block is EOF
+	-1 is free
+	N: next block in current file
+
+	Accessing Nth block in file is O(N)
+
+directories in FAT: are files (specially marked)
+	. contain data
+	. array of directory entries
+		(name)|(size)|(1st block number)
+
+block number of root directory stored in superblock, which will then contain the rest of the files
+
+very hard to move files...instead copy then delete
+
+
+Unix File System design:
+
+(system block)|(inode table-1 entry per file)
+
+each inode entry:
+	- timestamps (m - inode,c,a - access)
+	- uid, guid, permissions
+	- link count (number of directory entries that point to this file)
+
+
+block numbers
+	inode table
+	if file is too big, indirect block
+	if file is still too big, use double indirect block
+		the indirect block points to an indirect block table
