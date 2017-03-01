@@ -1,0 +1,87 @@
+2/27/2017
+
+Inodes(indirect node) are:
+    - Fixed size meta data about the file.
+    - 1 per file which is indeced via the inode number
+    - $ls -il file 1 file 2 ... which will give 319264 (inode number) -rw-r-r--2 eggert "lastModified" file1, etc etc
+        - ls -il calls stat which creates a data structure with all the metadata of various things in the file system
+Inode does NOT tell you:
+    - the name of the file
+    - the directory of the file
+ 
+This indirection can be a performance problem
+    - can also be a correctness problem ... so we have a linked count (the 2 is the number of pointers to the same file)
+        - increment link count when there are more hard links
+        - there is no primitive to delete the inode (delinode(219376)) or like openinode(219376, O_RDONLY) (2nd is more efficient)
+        - downside for openinode is security (ex /a/ is rw---, while /a/b/c is -rw-r-r, the second should not be readable by anyone since the parent is not readable for others, but with openinode, you can just read it with openinode)
+    - no extra hard links to directories (apart from the fact that every directory is linked to its parent)
+        - ln /usr /usr/eggert/dir will make inode 37 create a directory entry but that will increment link count which cannot be easily deleted
+ 
+Linux ext3 v2 directory entry
+ 
+4 bytes inode number, 2 bytes dir entry length, 1 byte name length, 1 byte for file type, and then some 256 bytes for the name (1 to 255 bytes)
+    - if the name is not the full 255 bytes, then it will be unused -> ex if entry length is 50, and name length is 5 then you have a total of 4 + 2 + 1 + 1 + 1 + 5 = 13. so 37 bytes that are unused
+    - the unused entries are used for padding, and alignment
+    - you can also change an entry to junk by making the name length very long, and then we can never access/get the entry (thats an easy way to unlink)
+    - we also can get varying length file names by doing this
+ 
+So how to implement open("file"m,...) and unlink("file",...)
+    - use namei: filenames -> inode numbers
+    - "" is invalid :)
+    - "a" = look for entry "a" in directory 2917 which returns 7634
+    - "a/bb" = first 2917, then 7634, and then changed to 291 which is the inode for bb
+    - "." = just be the current direcotry inode
+    - "a/bb/." = 2917 goes to 7634 goes to 291, stays at 291
+    - "a/bb/./.." = somewhere in 291, we would have the .. which would point back to 2917
+        - this is not a violation of the link counts since we cannot unlink directories ... rmdir("foo") will work if directory is empty, so link count is just self pointer
+        - treats two or more / as just being one single slash
+    - if you put a slash at the end, then the system treats it ike a dot after the slash so its a directory. CANNOT do it if its a file (so no file/)
+    - if you put slash at the beginning, like /a/bb/./.., then you go to the root directory section of the process table and get that inode
+ 
+In our process table, we had the working directory column, and in the process table entry, that means an inode number
+ 
+cd /usr ... how does this actually work
+    - ls a, now we need to be able to change the working directory of the process table
+        - system call to do that is chdir("/usr"), and takes file name, runs through namei and gets the directory number to put into the process table.
+        - chroot will change the root directory of the current process. fork will give the child the parent working and root directory
+        - .. is the same as root when we are at the root.
+    - sudo at /etc/password or /etc/shadow  these are really locked down since only have permission for everything for root user
+    - only the root user can call chroot, so cannot use a chrooted jail (ln /etc/pass /usr/eggert/jail/etc/pass, then chroot(/usr/egger/jail), but cant be done)
+ 
+So far we have seen regular file, and directory, so now let's look at symbolic link ->
+    - ln -s foo bar, or ls -li which might output 239416 lrw-r--r-- ______________ bar -> foo
+    - cat bar will do open("bar", ...) which will look at 2917, but then it will try to find the actual foo file instead
+        - if we link bar to bar, then the procedure will go into infinite look. To avoid this, namei will see if there are too many symbolic links (20+), it will just give up
+    - for short names, some OS will optimze the inode entry by putting all the symbolic links in the name section
+    - use readlink("b", buff, sizeof(buf)) -> which will figure out what to print out after the ELOOP error
+ 
+How to find out if a file is a symbolic link?
+    - we cannot just always run stat("b", &st) ... because namei will take the b and follow the link
+    - so we use lstat("b", &st) which, if it is a symbolic link, then it does not follow that link ... ls by default just calls lstat on everything
+    - unlink("b") will never ever follow a symbolic link
+ 
+We can do ln a b, and then ln -s b c
+    - we can also do ln c d, since this will try link("c", "d")
+    - symlinks have inode numbers in linux ... so we can have multiple hard links to c and d so C not followed
+        - in other systems, symlinks are directory entries, so C is followed
+ 
+mkdir a b
+touch a/f b/f
+ln -s f a/g         // just means that symbolic link is treated sorta differently depending on the current directory
+ln a/g b/g
+ 
+ln -s A B
+diff A B            // you can actually make this have differing outputs
+ 
+fifos, we can make using mkfifo foo (named pipe).
+    - echo baz > foo ls -l will make prw-rw....
+ 
+There are also contigous files -> extra speed, but can lead to fragmentation
+Named sockets as well, message queues, sempahores, shared memory objects, typed memory obkects,
+ 
+mknod (some arguments) like 1 c /dev/null which creates /dev/null ... c which is short for character special file.
+Multiple file systems- -> a and b, LINUX has something called mount table which maps inodes to file systems
+    - root file system, user file system ... whenever we see a certain number, we switch file systems and tries to work with that
+    - run mount command to see the mount table.
+    - Identify each of the file systems by using a device number. In reality, every file is actually described by device number AND inode number
+ 

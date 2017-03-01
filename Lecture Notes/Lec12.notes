@@ -1,0 +1,81 @@
+3/1/2017
+
+File System Performance, Organization, and robustness:
+ 
+- Multiple file systems
+    - Flash drive A, Hard disk B
+    - How to copy from A to B?
+    - Mount table: map inodes to file systems
+    - It will look like nested file systems
+    - Files are identified by device number inode number pair
+ 
+Levels -> symbolic links, file names, directories file/name components, inodes, file system/mount, pointers, blocks, sectors (in this order)
+ 
+At the block level: at any point in time the block level will have many requests
+    - primary memory will have the current instructions/data and then that will later go on the disk (read + write apps)
+    - the rest of the pending requests will just be in ram ... eg write 200000 "7 Kib" or read from 1000000 etc ....
+    - can have worst cases thousands of pending requests ... so order matters (block scheduler)
+ 
+Block scheduler looks at all pending requests and looks at what to do next
+    - GOALS: high throughput of IO's per second (IOPS). No starvation either
+    - Simplest algorithm: do the cheapest request first
+ 
+Simple model Example: |input - location| for the distance needed from the current head location to the position on the disk
+    - called SSTF which stands for shortest seek time first ... will leed to starvation if lots of requests near one area, and one in a far far place that will never get called
+        - Average seek time if random locations .... avg[i-h] randomly chosen [0...1]       -> h is the location of the read head
+        h = 0, avg = 0.5 ... h = 0.5, avg = 0.25 ... h = 1/3, then avg = 1/3(1/6) + 2/3(1/3) = 5/18
+        take integral from 0 to 1 of h(h/2) + (1-h)(1-h/2) dh ... = 1/3
+    - another one is called elevator which goes up and down and reaches all the sectors in between in order
+    - another version is ciruclar elevator which always goes one way and when it reaches the top, and then just reappears at the bottom of the sector again
+        - example 1 and 2 are in queue ... do 1, done. Then wait a little bit and move the head to the right to finish 2. Then move readhead back to do 3
+        then 4 comes in and it goes the other way away again ... this is very inefficient since long back and forth moves are not good
+        - Anticipatory scheduling is used to dally a bit after finishing one operation and see if some requests come in that are close to what you want. This can cause starvation ... so maybe combine with elevator algorithm or have a timer to stop the dallying
+ 
+Robustness Terminology:
+    - error is a mistake in the designer's head
+    - fault is a latent problem in the deployed system
+    - failure is when the problem actually happens and the system behaves wrongly
+ 
+File system goals in robustness:
+    - Durability is the file system survives with a loss of power
+    - Atomicity is either the write fully happened or not happened ... like money in bank (either transaction happens or no)
+    - Performance as well!!!!!
+Example ... a simple app that opens emacs, reads a file, edits buffer, and then writes to file ... if write is atomic, then you are fine. else its gone
+    - Golden rule of atomicity ... never overwrite the only copy of your data if you cant assume atomicity
+        - two regions of data, old and new file ... if system crashes in new file, we at least have an old file ... how to figure out which is the new file though
+        - if each file has a time stamp at the start and that will tell u which one is newer but that means if we crash, still might be bad since we will chose the new file
+            - write the time stamp at end ... so if we crash and we dont have a time stamp, discard the "new" unfinished file and keep the old one ... called a commit record
+ 
+old "A"
+in between ??       write ("B")
+new "B"
+ 
+2 copies, non atomic        the questions marks are garbage if we crash in the middle and no time stamp ... cant arbritarily take one or the other
+A A     old
+? A
+B A     intermediate
+B ?
+B B     new
+1 2 // solutuon is to have a 3rd copy ....
+ 
+AAA -> ?AA -> BAA -> B?A -> BBA -> BB? -> BBB done ... at each point you get A or B. if all 3 agree, then we are good. If 2 agree, take that. If all 3 disagree (b ? a) take the first one (get the latest version of data)
+    -
+Lampson-Sturgis created some asssumptions to read/write better
+    1) Storage writes may fail and may corrupt other pieces of storage. A later read will report this as an error
+    2) Storage blocks can decay spontaneously (and a later read can report the error)
+    3) THe rate of failure is relatively low ... if blocks fail at high rate or all fail then its gone but low rate means u should be good
+ 
+for example, system call rename("d/a", "e/b");
+    - from user's point of view, either have it happen or not ... but remember that these are just nodes (lets say 77 ad 100)
+    - somewhere directory entry will have some name, and that name will map to an inode ... delete the old inode for the name (like a)
+        - we just create a new entry for e and put b in there ... BUT if it crashes, then we might either have 2 links which is bad when recovering space from the disk, or have lost the data
+        - solution is to make another inode entry in a different inode block (like say inode 12) which has link count 2, then write data block 2, then db 1, then inode block again with link count 1 ... there are leaked storage though if crashes after db 1 and we see link count 2 but really should be 1
+        - fsck can look for leak by reading the file system into RAM and see which storage blocks arent used ... its a pretty slow program and it will be standalone (cant use/do anything else).
+Make file system invariants (logical statements that should always be true)
+    - boolean expressions that must be true
+    - example, for a BSD style file system, bit map of free blocls, inode, direct pointers, and then indirect pointers
+    1) each reachable block in filesystem contains initialized valid data for its format
+    2) Each block is used for exactly one purpose
+    3) All referenced data blocks are marked as used in the bitmap
+    4) ALl unreachable data blocks are also marked free in the bitmap
+All invariants will conflict so decide which ones are more important (3 or 4) ... violate 3 = disaster, violate 4 is u need fsck to work
