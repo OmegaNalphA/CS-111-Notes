@@ -4,3 +4,119 @@ Crash Consistency, FSCK and Journaling
 
 !File data must persist!
 - has to be stored and retain data even on power loss
+
+Challenge, how to update persistent data despite #power loss# or #system crash#
+--crash Consistency problem--
+Covered by fsck, file system checker, and Journaling
+
+#42.1# A Detailed Example 
+appending another block to existing file
+- need to modify inode
+- write new block
+- change bitmap
+If crash occurs anytime during, what do?
+
+--Crash Scenarios--
+Assume only a single write succeeds, 3 outcomes possible
+1) Just the datablock is written to disk 
+- data is on disk, but no bitmap nor inode points to it. 
+	- as if write never occured, isn't a problem really
+
+2) Just inode is written
+- inode points to address, but no datablock
+	- pointer will read garbage data
+- file-system inconsistency
+	- bitmap is saying unallocated but inode is saying is allocated 
+
+3) Just bitmap is written 
+- space leak, block is never used by system
+
+Two writes succeed, 1 fails
+1) Inode & bitmap, not datablock
+- metadata Consistency, but garbage data
+
+2) Inode & datablock, no bitmap
+- file-system inconsistency
+
+3) bitmap & datablock, no inode
+- file-system inconsistency but now dont even know where datablock is located!
+
+#42.2# Solution 1, File System Checker 
+Simple approach, let inconsistency happen then fix at reboot
+- fsck comes in 
+	- cant fix everything, example where metadata is consistent but points to garbage data
+Summary:
+1) Superblock
+- does sanity checks, try to find corrupt 
+	- fs size > num allocated blocks etc
+
+2) Free blocks
+- scans inodes, indirect blocks, double indirects etc to understand what blocks are currently allocated
+	- produces correct bitmap, then checks again 
+	- trusts inodes > bitmap
+
+3) Inode State
+- Check for corrupt
+	- valid type field, if suspect is cleared and bitmap updated
+
+4) Inode Links
+- verifies link count
+	- builds own link count for each file
+	- fix count within inode if need be 
+
+5) Duplicates 
+- two inodes refer to same block 
+
+6) Bad blocks
+- bad block pointers, out of range etc 
+
+7) Directory Checks 
+- checks on the contents of the directory, ".", ".."
+
+Fundamental problem is that fsck is too slow 
+
+#42.3# Solution 2: Journaling (or Write-Ahead Logging)
+Before modify, write a little note that says what you are going to do 
+- try again if failure
+
+--Data Journaling--
+Starts with info about update and what will be changed
+Transaction Identifier (TID)
+Then the exact contents of blocks
+- physical logging ^, logical logging is more complicated but saves space and time 
+end if Transaction, also contains TID
+
+Once done, checkpoint 
+- overwrite current structure of journal 
+- only overwrites last block (TxE in book) once safe State
+
+--Recovery--
+crash before Transaction in log
+- skip Transaction
+Replay botched transactions
+
+--Batching Log updates--
+buffer all updates into global transaction data 
+- avoid excessive write traffic
+
+--Making the Log Infinite--
+Larger the log, longer recovery 
+When full, no other transaction can happen 
+- treat as a circular data structure 
+	- once checkpoint is hit, free the space in the journal 
+	- could use mark, or a journal Superblock
+
+--Metadata Journaling--
+No user data written, just the metadata
+
+1. Data write: Write data to final location; wait for completion
+(the wait is optional; see below for details).
+2. Journal metadata write: Write the begin block and metadata to the
+log; wait for writes to complete.
+3. Journal commit: Write the transaction commit block (containing
+TxE) to the log; wait for the write to complete; the transaction (including
+data) is now committed.
+4. Checkpoint metadata: Write the contents of the metadata update
+to their final locations within the file system.
+5. Free: Later, mark the transaction free in journal superblock.
+
