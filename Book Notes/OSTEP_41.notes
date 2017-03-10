@@ -1,0 +1,76 @@
+Chapter 41
+
+Locality and the Fast File System
+
+Originally, developed by Ken Thompson, 
+Just a superblock, inodes, and rest is data
+Simple, better hieracrchy, and easy to interface with 
+
+#41.1# The Problem, Poor Performance
+old Unix System treated data like it was RAM, did not worry about positioning cost
+- data blocks far from inode, very expensive seek to find data blocks
+
+Disk gets fragmented
+- free list points to blocks across disk, eventually contiguous file would be spread across many different parts of the disk
+	- defragmentation tools reorganize disk data to place files contiguously
+
+Block Size (512) too small to transfer data efficiently
+- minimized internal fragmentation but bad for transfering
+
+#41.2# FFS, Disk Awareness Is the Solution
+Built FFS, needed to be aware of changes to disk 
+- used by most file systems now
+
+#41.3# Organizing Structue: The Cylinder Group
+FFS divides disk into cylinder groups
+cylinder: set of tracks on diff surfaces of hard drive same distance from center of drive
+Aggregates N consecutive tracks to form group
+- everything is a collection of cylinder groups 
+
+We can't see the geometry, so we organize everything into block groups 
+- important part is by placing 2 files in same group, no long seeks across disk
+
+Parts
+- superblock
+	- All the info of the system, needed for mounting
+- per group inode bitmap and data bitmap
+	- manage free space, avoid fragmentation
+- inode and datablock region
+
+#41.4# Policies, How to Allocate Files and Directories
+- basic mantra: keep related stuff together
+
+Directories
+- find cylinder group wth low num allocated Directories and high free inodes and put in that group 
+
+File 
+1) makes sure to allocate data block of file in same group as its inode 
+- don't want some long seek times
+
+#41.5# Measuring File Locality
+Want to check if locality (closeness of files is important)
+- If same file, distance is 0, if two files in same directory, distance is 1
+-  Our distance metric, in other words, measures how far up the directory tree you have to travel to find the common ancestor of two files; the closer they are in the tree, the lower the metric.
+Find that most file access are within a distance of 1 or 2 away 
+
+#41.6# The Large-File Exception 
+Without exception, Large File could fill entire block group and spill into others
+- hurts locality bc other "related" files cant be placed there 
+
+FFS allocates some chunk of blocks to that group, then another chunk in another group, etc etc 
+- reduce risk of hurt performance by choosing chunk size carefully
+amortization: choosing chunk size such that file will spend most of its time transfering data from disk and little time seeking between blocks
+Can do math to really figure out peak performance
+- but FFS chose to just do 12 blocks in 1 group etc
+	- every 1024 blocks or 4MB were in separate groups
+#41.7# A Few Other Things About FFS
+Most files were 2KB, and while a 4KB block is good for transfer, real bad for space
+-internal fragmentation-: ^
+sub blocks: 512 byte little blocks that fs could allocate to files 
+- fill sub-blocks first then copy to 4KB block then free sub-blocks
+- kinda inefficient, so FFS buffers writes and issues in 4KB chunks 
+
+-Optimized Disk Layout-: skip over every other block, enough time to request next sequential read 
+paramaterization: ^ 
+
+Optimize this by reading into #track buffer# which reads whole track into cache

@@ -1,0 +1,6 @@
+Chapter 42
+
+Crash Consistency, FSCK and Journaling
+
+!File data must persist!
+- has to be stored and retain data even on power loss
