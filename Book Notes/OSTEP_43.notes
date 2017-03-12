@@ -2,3 +2,88 @@ Chapter 43
 
 Log-structured File Systems
 
+LFS buffers all updates in memory segment, when full is written to disk 
+- only writes to free memory so writes sequentially 
+
+#43.1# Writing To Disk sequentially
+Write such that everything is in line
+- inode for the datablock is right next to the datablock it points to 
+
+#43.2# Writing Sequentially and Effectively 
+If we write one block, wait a little bit, then try to write to the next block adjacent
+- disk already rotated, takes a while before going back to proper placement
+Sequential alone doesnt fix, need contiguous writes (one large write)
+
+write buffering: keeps track of updates in memory, then writes all at once
+- has to keep segment pretty large
+
+#43.3# How Much to Buffer?
+The more you write, closer to peak bandwidth
+- but greater risk of failure 
+
+F is some fraction of peak performance
+D is amount of data
+Rpeak is peak transfer rate 
+TPosition is time to position the head
+D = F/(F-1) * Rpeak * TPosition 
+
+#43.4# Problem, Finding Inodes
+General Unix, easy to find bc in array and placed on disk at specified locations
+- here inodes are scattered all over the disk
+- write in place so latest version of inode keeps moving
+
+#43.5# Solution Through Indirection, The Inode Map
+inode map: imap is structure that takes inode number as input and produces disk address of most recent version 
+- simple array, 4 bytes (disk pointer) per entry
+imap is persistent, so where to store?
+LFS places db, inode and imap all together on disk
+
+#43.6# Completing The Solution, The Checkpoint Region
+if imap is spread all over the disk, how do we find it?
+*Checkpoint Region* solves this by storing pointers to all the imaps, imaps store pointers to inodes, inodes point to datablocks
+- only gets updated every 30 sec or so 
+
+#43.8# What About Directories?
+since imap stores the inodes, we just check the imap for which directory we want to go to
+avoids *recursive update problem* where when inode location changes, have to change values of all the directories pointing to those inodes going up the chain 
+- since everything in imap, only need to update imap 
+
+#43.9# A New Problem, Garbage Collection
+While writing to new locations constantly, leaves garbage versions of file structures all over disk 
+- could keep them, use as previous versions of files 
+LFS needs way to clean the unused memory 
+If LFS just cleared data blocks as it went, would result in a bunch of holes all over the memory 
+- reads in M segments, compacts into N segments where N < M of the live blocks, and writes to new N segments 
+	- frees up the old M segments for use 
+How to tell alive or dead? How often to run? Which segments to pick?
+
+#43.10# Determining Block Liveness
+-Segment Summary Block-: stores data at head of segment about each data block with inode number and offset 
+How to determine if Dead:
+1) Block D with Address A, look at Segment Summary Block and find inode number N and offset T
+2) look in imap to find where N is and read N from disk
+3) Use T, look in inode and see where inode thinks Tth block of this file is on disk 
+4) If points to A, block is live. If anywhere else D is dead.
+
+Pseudocode:
+[c]
+(N, T) = SegmentSummary[A];
+inode = Read(imap[N]);
+if (inode[T] == A)
+// block D is alive
+else
+// block D is garbage
+[end]
+
+#43.11# A Policy Question, Which Blocks To Clean, And When?
+When to clean first 
+OG LFS paper talks about hot and cold segments
+- hot has a lot of overwrites constantly 
+	- best policy is to wait a long time 
+- cold has relatively stable data
+	- clean cold first then clean hot 
+
+#43.12# Crash Recovery and the Log
+LFS uses Checkpoint Regions to check for completions in case of crashes
+- CR points to tail end of log as well so can start instructions from that point on
+
