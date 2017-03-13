@@ -1,0 +1,142 @@
+3/13/2017
+
+--Distributed Systems--
+Goal is to increase performance via parallelism 
+Reliability via redundancy 
+
+simple!
+via abstraction
+r = f(a,b)
+s = g(r,a)
+^becomes client code, no longer cheap its kind of expensive 
+
+Remote Procedure Call (RPC)
+- args are copied via network to remote location
+- result is copied back 
+- System Calls on Steroids
+	- instead of just trapping into kernel, have to shift calls into ethernet
+
+--Diff RPC vs ordinary calls--
+- args always copied
+	- no call-by-reference it doesnt work!
+	- pass pointer, server side doesn't care about a pointer!
+	- this is a common approach that is blocked
+		- this is how C buffers work, the read command
+		- every java object is internally handled by references
+- Caller and callee must agree on format of copies sent over the wire 
+	- pass an integer, client -> server
+		- if client says int = 16 and server says int = 32, issue arises
+			- in this case, client should pad the integer with 16 extra bits so server will work 
+		- another issue is representing signed integers 
+			- usually 2's complement, but you dont know 
+		- little endian vs big endian issues 
+			- can reverse the bytes, gets misinterpreted 
+			- big endian most popular
+			- client "marshals" data structures to server, has to stay intact 
+				- protocol defines how to send over data structures
+
+--Reliability Issues that Arise--
+- messages get lost
+- messages get corrupted
+- messages get duplicated 
+- Network may be down 
+- server may be down 
+
+--How to solve--
+- corruption 
+	- checksum our messages + resend corrupted message 
+- lost messages 
+	- acknowledgements
+		- resends if no acknowledgements after timeout 
+- duplicated 
+	- sequence numbers 
+		- unique id in message lets you know if the same one was sent earlier 
+- server/network down 
+	- can't tell the differenece between the two tbh 
+	- retry if no answer -> at least once RPC
+		- this is can be bad
+			- transfer 100$, dont get a reply, keep transfering
+		- use on actions that you don't care if it happens multiple times 
+			- clear bank account, just set bank account to 0
+			- can be called multiple times and nobody cares, really just want it to happen 
+	- report failure to the caller/client -> at most once RPC
+	- what we really want is exactly once RPC
+		- super hard to make, very difficult algorithim and its super expensive
+
+|\|
+| |
+|/|
+|\|
+| |
+|/|
+c s 
+
+--Performance Issues that Arise--
+- distance issues 
+	- move client and server closer
+- fatter wires/Smaller Object Representation
+	- really faster 
+	- helps with throughput, doesnt help with latency 
+- Multiple Threads
+- Cached Version 
+	- big win for latency, can speed it up
+	- but cache can be wrong/obsolete
+- Batching
+	- send one big question than multiple small questions
+- pipelining
+	- Don't send questions Serially
+	- send all at once, then wait 
+	- |\|
+	  |\|
+	  |/|
+	  |\|
+	  |/|
+	  |/|
+	  c s
+	- have to deal with out of order answers and some answers may be lost 
+	- do pipelining if all the questions are independent 
+
+Before jumping into these problems and their solutions, we're going to talk about 
+--Redundancy--
+Build on ideas from non-distibuted systems 
+
+RAID (Redundant Array of (inexpensive/independent) Disks)
+	- Assumption with all RAID is that failed drives will be replaces almost immediately 
+		- all finish before next fail
+	- RAID 0 (inexpensive)
+		- OG motivation is find the cheapest drives in cost per byte
+		- 2TB drive is cheapest, but want a 10 TB drive
+			- Easy, just link 5 2TB drives together, will be cheaper than buying 1 10TB drive 
+			- Problem though, this will fail at a rate 5 times greater than a regular drive, less reliable 
+	- RAID 1 (mirroring)
+		- Each drive has a copy of itself, so 10 drives 
+		- if any single drive fails, then can be replaced and re-coppied
+		- while strong on Reliability, very expensive
+		- Eggert uses this for his computer though 
+	- RAID 2 and 3 were kinda bad so we don't care 
+	- RAID 4 (Parity)
+		- Have all your data drives, then one extra drive called your parity drive 
+		- |A|B|C|D|E|A^B^C^D^E| (^ = XOR)
+		- If want to change D -> D', A^B^C^D^E^D^D'
+			- Theoretically can rebuild another drive by XOR all of the parity bits with everything else 
+			- can rebuild any ine failed disk 
+		- slows down writes pretty hard, have to read from corresponding block in parity bit then rewrite it 
+		- the Parity drive becomes the hotspot, double the IO of the other drives 
+		- SEASnet uses RAID 4
+			- Adding a new drive is cheap and trivial 
+			- just make the drive all 0's and its already included in the parity drive 
+	- RAID 5
+		- Split disk into a bunch of "stripes"
+		|A1|B1|C1|D1|E1|A1^B1^C1^D1^E1|
+		|A2|B2|C2|D2|A2^B2^C2^D2^E2|E2|
+		...
+		- distributes it, much more reliable and distribues the I/O so theres no hotspot 
+		- generally don't grow these types of systems
+
+Mean time to failure (MTTF)
+Mean time to recover (MTTR)
+Mean time between failures (MTBF) = MTTF + MTTR
+
+availability = MTTF/MTBF
+downtime = 1 - availability
+

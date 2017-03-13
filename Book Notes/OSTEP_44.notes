@@ -1,0 +1,42 @@
+Chapter 44
+
+Data Integrity and Protection
+
+#44.1# Disk Failure Modes
+In old systems, either disk stops working or fails completely, called *fail stop model*
+Big errors, *latent sector errors* (LSE) and *block corruption*
+
+LSE's occur when sector is damages, ex. disk head touches surface for some reason 
+Cosmic Rays also flip bits 
+Error Correcting Codes (ECC) will try to fix broken blocks
+
+Corruption cases, ex. where firmware writes block to wrong location
+- Disk ECC indicates the contents are fine 
+Type of Silent Fault 
+- no indication of fault, but returns faulty data 
+
+fail-partial disk failure model 
+
+#44.2# Handling Latent Sector Errors 
+If storage system tries to access a block and disk returns an error
+- just use whatever redundancy system has in its arsenal 
+
+#44.3# Detecting Corruption, The Checksum
+Detection is important part, fixing is same as above 
+checksum: takes in data, produces small summary of data 
+- theoretically, if data is corrupt checksum doesnt match 
+
+--Common Checksum Functions--
+Classic is using XOR but possible to mess up 
+Addition is super fast ignoring overflow 
+- not good if data shifted
+Fletcher Checksum
+- D has d1...dn for each s1 = s1 + di mod 255 (for all di)
+- s2 = s2 + s1 mod 255 for each di 
+Cyclic redundancy Check (CRC)
+- divide/modulo the giant data block and use that as the checksum
+
+--Checksum Layout--
+set the checksums at beginning before data blocks 
+
+#44.4# Using Checksums 
