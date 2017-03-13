@@ -140,3 +140,34 @@ Mean time between failures (MTBF) = MTTF + MTTR
 availability = MTTF/MTBF
 downtime = 1 - availability
 
+Network File System (NFS)
+Many clients, few processors, goes to many storage devices 
+
+Linux App will use same system calls as before, no idea its an NFS system 
+- open read write etc 
+Goes to Virtual File System 
+- just marshals over wire to NFS server 
+
+--NFS Protocol--
+looks suspiciously like UNIX syscalls but theyr aren't 
+LOOKUP(dir fh, name) -> File handle  & atrributes
+- file handle (fh) short name for file (like an inode #)
+- Unix version -> open("a/b/c", ...)
+- LOOKUP(cd, "a") -> fh1
+- LOOKUP(fh1, "b") -> fh2
+- LOOKUP(fh2, "c") -> fh3
+
+CREATE(dir fh, name, attr) -> fh + attr
+MKDIR(dir fh, name, attr) -> ""
+REMOVE(dir fh, name) -> status
+RMDIR(dir fh, name) -> status
+READ(fh, ...)
+WRITE(fh, ...)
+etc
+
+Design goal for NFS is that it uses *Stateless System*
+Want fileserver to not care or know about client state 
+- if fileserver crashes and reboots, everything is ok, no important state is lost 
+- makes simple reliable server but has performance Issues
+	- can't do batch requests, bc have to store previous questions in cache 
+		- if it crashes then lose that state for the return 
