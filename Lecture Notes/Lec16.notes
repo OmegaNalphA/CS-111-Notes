@@ -1,0 +1,68 @@
+3/15/2017
+
+Security (OS < Computer < System)
+
+Computer Attacks 
+- against privacy
+- against integrity 
+- against service
+
+This is the biggest software constraint 
+- otherwise, assume universe is benign, let anything run and few bugs no harm no foul 
+	- now have to assume world is out to get you
+
+Step 1: Threat Modeling
+- Insiders 
+	- where are your backups stored?
+	- who is managing your system?
+	- who are the people involved?
+- Social Engineering 
+	- use people and trick them into giving you their password 
+	- these two are the largest security threats 
+- Network Attacks 
+	- computers running bad software or evil software 
+	- viruses, drive-by downloads
+	- Denial of Service attacks 
+	- buffer overruns 
+- device attacks 
+	- USB sticks with malware 
+Should have probabilities, costs if someone breaks in 
+
+Step 2: Design
+General functions for defense 
+- Authentication
+	- e.g. password 
+- integrity
+	- unauthorized changes to data 
+	- checksum 
+- Authorization
+	- access control list 
+- Auditing 
+	- log file check
+- Correctness 
+	- static checking of code 
+- Performance
+	- make sure overhead isnt too large where users will give up 
+
+--How to do it--
+Authentication
+- based on what they know 
+	- bad if attacker might know it too 
+- based on what they have
+	- token, car keys etc 
+- based on who they are 
+	- biometric Authentication
+
+None are perfect 
+Use two factor Authentication, ideally use two different formats 
+^ most of these are susceptible to Social Engineering
+- designed to slow down attack, make it more expensive to do 
+
+Authentication in practice, external vs internal 
+external
+	- check who you are look at you 
+		- done by sentry, expensive 
+	- SEASnet Password 
+internal 
+	- assumes external is done, just does periodic checks done more often 
+	- process table entry, checks user number Authentication
