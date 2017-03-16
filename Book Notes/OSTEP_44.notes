@@ -40,3 +40,25 @@ Cyclic redundancy Check (CRC)
 set the checksums at beginning before data blocks 
 
 #44.4# Using Checksums 
+When reading block D client also read checksum *stored checksum*
+- client computes checksum over D *computed checksum*
+- checks if they are equivalent 
+
+#44.5# A New Problem, Misdirected Writes 
+Misdirected Write: Failure mode, when data written correctly but in wrong location 
+- Solution: Add more data to checksum
+	- *physical identifier* where its located
+
+#44.6# One Last Problem, Lost Writes 
+Lost Write: device thinks write succeeded, but never persisted
+	- read-after-write, verify the write occured, super expensive and doubles I/O time
+
+#44.7# Scrubbing
+Periodically reads through every block of the system to check if repeats or valid checksums
+
+#44.8# Overheads of Checksumming
+Space Overheads
+- each stored checksum takes up space, 0.19% of on-disk space
+- Memory of System
+	- have to have room for checksum and data together in Memory
+	
