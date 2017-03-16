@@ -1,1 +1,33 @@
 Chapter 13
+
+The Abstraction: Address Spaces
+
+#13.1# Early Systems 
+Originally was just a set of routines (basically a library that sat in memory)
+- one process used the rest of the memory 
+
+#13.2# Multiprogramming and Time Sharing
+Multiprogramming: sharing machines between users 
+- increase in efficiency was important 
+
+time sharing: allow multiple users to use machines
+
+interactivity: timely response from machine 
+
+OG way of doing, run program, give full memory, then stop and switch
+- very expensive and very slow 
+
+#13.3# The Address Space 
+Address Space stores the memory state of the running program 
+- program uses stack to keep track of where it is in the function call chain 
+- allocate variables to heap 
+
+Needs to *virtualize memory*
+- physical memory is limited and can only use so much 
+
+#13.4# Goals 
+Program should not know that it is running in virtual mem *transparency*
+Needs to be as fast and space efficient as possible *efficiency*
+OS *protects* other memory locations 
+- isolates a process 
+
