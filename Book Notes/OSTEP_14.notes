@@ -1,0 +1,40 @@
+Chapter 14
+
+Interlude, Memory API
+
+How to allocate and manage Memory
+
+#14.1# Types of Memory
+2 types of memory
+-Stack Memory- handled implicitly by the compiler for you 
+- also known as auto memory
+- this is how variables are created, and why when you leave the scope of a function that variable dies 
+
+Need for longer living memory creates 
+-heap memory- explicitely handled allocations 
+- this is malloc of the data 
+
+#14.2# The malloc() Call
+Success, returns pointer to new data loc, fails, returns NULL
+[c] void * malloc (size_t size); [end]
+can use sizeof() to determine the size of an object to malloc 
+- but be careful!
+	- when you sizeof() a pointer it will show the size of the pointer, not the actual object
+
+#14.3# The free() Call
+Use free(ptr* ptr); to free memory that was mallocd
+
+#14.4# Common Errors 
+Forgetting to allocate memory 
+- a ptr without an allocation doesn't point to anything
+Not allocating enough memory
+- this can result in buffer overflows or segmentation faults 
+Forgetting to Initialize Allocated Memory
+- Malloc, but don't set anything in the space, its all garbage data
+Forgetting to Free Memory
+- Memory leaks 
+Freeing before done 
+- dangling pointer, then tries to do stuff with it 
+
+#14.5# Underlying OS Support
+malloc and free are library calls that sit on top of library calls 
