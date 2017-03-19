@@ -2,3 +2,21 @@ Chapter 15
 
 Mechanism: Address Translation
 
+Main goals of OS, efficiency and control
+address Translation: hardware transforms each memory access passed in (virtual) into an actual physical memory address 
+- must create illusion that program has its own private memory
+
+#15.1# Assumptions
+Assume user's address space must be placed contiguously in memory 
+size isnt too big and address space isnt too big 
+
+#15.3# Dynamic hardware Based Relocation 
+base and bounds or 
+Dynamic Relocation: early way to virtualize memory space 
+Needs 2 registers, one base other bounds (limit register)
+In this scheme, every program written and compiled like its at address 0
+sets base register to value at which to actually have program run 
+- if any memory referece is generated, translated to plus the new base register
+Checks to make sure the placement is "in bounds" basically less than the bounds register 
+
+Rest of chapter relatively useless, just a recap 

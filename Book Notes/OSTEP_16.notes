@@ -1,0 +1,29 @@
+Chapter 16
+
+Segmentation
+
+base-and-bounds is wasteful, leaves a bunch of free space in the middle
+
+#16.1# Segmentation, Generalized base-and-bounds
+instead of just 1 base-and-bounds why not have one for each logical segment of the address space?
+- segment just a contiguous portion of the address space of a particular length 
+- 3 segments, code stack and heap. 
+	- can put each of these 3 parts in different places to save space 
+Segmentation Fault: accessing address out of bounds of segment 
+
+#16.2# Which Segment are we Referring To?
+-explicit approach-
+top 2 bits are the segment rest 12 are the offset 
+
+#16.3# What About The Stack?
+Grows Backwards, otherwise the same 
+Needs new bounds check 
+
+#16.4# Support for Sharing
+code sharing: share memory segments between address spaces
+need *protection bits* few bits per segment to show if program can read or write
+
+#16.5# Fine-grained vs. Coarse-grained Segmentation
+Coarse-grained = large, unflexible chunks 
+fine-grained = smaller, more agile chunks 
+need *segment table* 

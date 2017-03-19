@@ -1,0 +1,55 @@
+Chapter 17
+
+Free-Space Management
+
+issue is with user-defined and variable size free space 
+external fragmentation: free space gets chopped into little pieces of different sizes 
+- no one contiguous space 
+
+#17.1# Assumptions 
+Need a free() and a malloc()
+external fragmentation is what we are primarily concerned about
+once malloced cannot be moved till freed 
+
+#17.2# Low-Level Mechanisms
+--Splitting and Coalescing--
+splitting: if a request comes in for a block smaller than the size of the free block the allocator will split it into two 
+Coalescing: in freed list, if contiguous blocks are free push all of them together to form one node rather than mutiple separate ones
+
+--Tracking The Size of Allocated Regions--
+Most allocators store some info in a header block in memory 
+this is how free() only needs a pointer passed in, not a pointer and a size 
+
+--Embedding a Free List--
+essentially, implement a heap and constantly split and coalesce the free data in the heap 
+- read this part, its kind of long but I don't think it is very relevant to the class 
+
+--Growing the Heap--
+Usually return fail or null, which is fine
+Others start small, and request OS for bigger size 
+
+#17.3# Basic Strategies 
+Ideal = fast and low fragmentation. Each method performs optimally and worst in different scenarios 
+
+--Best Fit--
+First, search through free list and find chunks of free memory that are as big or bigger than the requested size. 
+Return the smallest one in that group 
+Pro: reduces wasted space
+Con: heavy performance penalty 
+
+--Worst Fit--
+Return largest chunk out of free list 
+Pro: tries to get rid of large chunks instead of bunch of small ones 
+Con: excess fragmentation and high overheads 
+
+--First Fit--
+finds first block big enough and returns 
+Pro: Speed 
+Con: beginning of list polluted with small objects, need to use different ordering scheme to coalesce easier 
+
+--Next Fit--
+Keep pointer where last search occured and continue from there 
+Pro: spread out searches more uniformly 
+
+#17.4# Other Approaches 
+The book lists a ton of other really cool methods for managing the space that are much more efficient, but for the purposes of the final I am skipping them
