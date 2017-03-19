@@ -4,3 +4,38 @@ Multiprocessor Scheduling Advanced
 
 This chapter requires Advanced knowledge from a lot of the book 
 If you haven't read most of the second section already I would highly suggest you go and read it before this chapter 
+
+#10.1# Background, Multiprocessor Architecture
+Need to understand difference between single-CPU and multi-CPU 
+Centers around hardware *caches* 
+In a system, hierarchy of hardware caches that help processor run faster 
+- small, fast memories that hold copies of populare data that is found in main memory 
+Main memory: holds all of the data, but is slower to access 
+- by using caches seems faster 
+
+Caches use locality, temporal locality and spatial locality
+temporal locality: when data accessed it is likely to be accessed again pretty soon 
+spatial locality: if access data at point x, will probably access things around point x as well 
+
+In multi-CPU systems, we face the issue of *cache coherence*
+- we ignore most of it, basically solved by hardware 
+	- bus snooping is one method 
+
+#10.2# Don't Forget Synchronization
+This is covered in more detail later, but definitely make sure the shared data is dealt with properly 
+(solved by mutex locking)
+
+#10.3# One Final Issue, Cache Affinity
+prefer to keep a process on the same cpu since the cache it runs with is already loaded 
+
+#10.4# Single-Queue Scheduling
+Put all jobs needing scheduling into a singular queue 
+Cons:
+- not very scalable, too many locks reduce the performance 
+- cache affinity is terrible since can't keep choosing the same CPUS
+
+#10.5# Multi-Queue Scheduling
+One Queue per CPU 
+Each queue follows some scheduling algorithm, round robin maybe 
+Con: load imbalance, its possible for one cpu to be left idle 
+Can use work stealng, steal work from other queues
