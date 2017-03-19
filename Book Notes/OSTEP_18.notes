@@ -1,0 +1,42 @@
+Chapter 18 
+
+Paging, Introduction
+
+There are 2 ways to approach space management 
+1) segmentation: chop everything into variable sized pieces 
+	- lots of fragmentation from that 
+2) paging: chop into fixed size pieces 
+	- split each segment into a page, view as page frames 
+
+#18.1# A Simple Example And Overview 
+tiny addres space, 64 bytes w/ 4 16 byte pages (0,1,2,3)
+Biggest pro, there is flexibility 
+- abstraction of the address space is much useful, dont have to worry about groeth of stack and heap 
+
+Each process has a *page table* to store address translations 
+- maps to physical memory 
+
+How to interpret the virtual address 
+- split into Virtual Page Number and Offset 
+- since our example is 64 bytes, neeed 6 bits (2^6 = 64) 
+	- so first 2 bits are VPN and last 4 are offset 
+- using this, we can find the physical fram the page resides 
+- now issue load to memory from physical frame number 
+
+#18.2# Where Are Page Tables Stored?
+Page tables can get huge, at least bigger than the other methods 
+Too complex rn, but will actually be stored in OS virtual memory
+
+#18.3# Whats Actually in the Page Table 
+Since its just a mapping, any data structure works
+- simplest is an array called a *linear page table* 
+Also uses a "valid bit" whether location is valid or not 
+"protection bits" whether page can be read write execute (rwx)
+"Present Bit" indicates whether the page is in physical mem or on disk 
+"dirty bit" shows modification 
+
+#18.4# Paging, Also Too Slow 
+Its pretty slow if you dont keep track in the hardware and software 
+
+#18.5# A Memory Trace 
+The book goes through an example of how everything works together
