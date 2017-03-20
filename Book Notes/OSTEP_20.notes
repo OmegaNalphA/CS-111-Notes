@@ -1,0 +1,45 @@
+Chapter 20
+
+Paging: Smaller Tables
+
+Tackle the issue of page tables being too big and consuming too much memory 
+Start with linear page table 
+
+#20.1# Simple Solution, Bigger Pages 
+Store more stuff in one location so its not as spred out 
+Lots of waste inside each page, internal fragmentation 
+
+#20.1# Paging & Segments 
+Have one page table per logical segment 
+- 3 page tables, one for code, heap, and stack 
+Use the base register to point to the physical address of the page table of that segment 
+- bounds signifies end of valid pages 
+Still has issues
+- Segmentation is not as flexible as we would like 
+- hybrid causes external fragmentation still 
+	- page sizes can be arbitrary now, can get too big 
+
+#20.3# Multi-level Page Tables 
+Turns linear page table into essentially a tree 
+Approach:
+Chop up page table into page size units
+If an entire page of page table entries (PTE) is invalid, dont allocate the page of the table at all 
+- to track validity, use *page directory*
+	- can tell you where a page of the page table is, or that there are no valid pages 
+essentially only store into memory valid page tables but keep slots in virtual memory through the page directory to actually have them exist 
+
+Page Directory 
+two level table, one entry per page of the table 
+consisits of a number of page directory entries (PDE) 
+- has a valid bit, and a page frame number (PFN) 
+- valid bit says at least one of the pages in the page frame number is valid 
+	- in at least one PTE pointed to by the PDE, the valid bit is set to 1
+
+Trade off, TLB miss costs 2 loads from memory, one for Page Directory and other for Page Table Entry 
+
+You can abstract this to multiple levels rather than just 2 
+
+#20.4# Inverted Page Tables 
+Have one page table that has an entry for ever physical page 
+vs having 1 page table per process 
+Use a hash table to go over this structure 

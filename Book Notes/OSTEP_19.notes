@@ -1,0 +1,43 @@
+Chapter 19
+
+Paging: Faster Translations (TLBs)
+
+Paging has a lot of overhead, and lots of mapping info to store 
+
+Add the *translation lookaside buffer* (TLB)
+- part of the MMU, simply hardware cache of popular virtual-physical address translations 
+- address translation cache, dont have to ask page table 
+
+#19.1# TLB Basic Algorithm 
+1) extract the Virtual Page Number (VPN) from the virtual address and check if TLB has it 
+- if it does, it has a TLB hit 
+	- extract page frame number (PFN) from relevant TLB entry
+	- concatenate onto offset from virtual address and form desired physical address 
+- doesn't, TLB miss
+	- accesses the page table to find translation 
+	- updates TLB 
+	- retries after update so it confirms 
+
+#19.2# Accessing an array 
+Since the TLB utilizes temporal and spacial locality it can incerease speed of first accesses
+If you try to access an array for the first time, the first is a miss but since it copies a lot of the area around it into the cache it goes pretty fast 
+
+#19.3# Who Handles the TLB Miss?
+Hardware used to handle entirely 
+uses a multi-level page table 
+Basically, the overall goal is to minimize TLB misses 
+
+#19.4# TLB Contents What's In There?
+fully associative: any given translation can be anywhere 
+The TLB uses protection and valid bits to make sure the accessed data is valid or readable 
+
+#19.5# Context Switches 
+multiple processes could have the same VPN that goes to a different PFN, but the TLB will be confused which one to pick
+One approach, flush the TLB on context switches 
+- huge cost for TLB misses 
+Use address space identifier, used to identify which process it maps to
+
+#19.6# Replacement Policy 
+Which entry do we replace in the TLB when we load?
+Least recently used entry, that way we replace ones that arent used often 
+Otherwise randomness, its pretty fair

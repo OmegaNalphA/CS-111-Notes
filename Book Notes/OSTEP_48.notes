@@ -1,0 +1,18 @@
+Chapter 48
+
+Sun’s Network File System (NFS)
+
+Clients as network for data from server 
+This is called a distributed file system 
+
+#48.1# A Basic distributed File Sytem 
+on the client side, all the commands seem to be the same 
+open() read() mkdir() etc. 
+this makes transparency access to files 
+
+#48.4# Key To Fast Crash Recovery: Statelessness
+goal is to be *stateless* 
+don't want to care about what is happening on the client side at all 
+We dont want to have to worry about recovery protocols if the server crashes 
+
+#Didn't finish this, will eventually come back to it.#

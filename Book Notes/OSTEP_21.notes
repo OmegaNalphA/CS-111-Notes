@@ -1,0 +1,29 @@
+Chapter 21
+
+Beyond Physical Memory: Mechanisms
+
+So far, we've assumed an address space is super small and fits in physical memory 
+To get rid of this, we need an additional level in the memory hierarchy
+hard disk drive, its slow but it can store it 
+
+#21.1# Swap Space 
+First thing we need to do is reserve space on disk for moving pages back and forth 
+^ *swap space*
+OS needs to remember disk address of given page 
+It'll make sure to swap properly 
+
+#21.2# Present Bit 
+Use this bit to tell software if the data is in physical memory (1) or disk memory (0)
+page fault: access data not in physical memory
+
+#21.3# Page Fault 
+OS needs to handle swapping  of pages 
+
+#21.4# What If Memory IS Full
+Need to page out, replace with a disk page 
+Page Replacement Policy, Least Recently Used is best but a ton of overhead so approximated 
+
+#21.6# When Replacements Occur
+We don't only want to evict when memory is full, want to leave some space 
+Use watermarks, places where reccomended to dump 
+Use a page handler daemon to add or remove memory 

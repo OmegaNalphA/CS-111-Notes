@@ -101,7 +101,7 @@ Before jumping into these problems and their solutions, we're going to talk abou
 Build on ideas from non-distibuted systems 
 
 RAID (Redundant Array of (inexpensive/independent) Disks)
-	- Assumption with all RAID is that failed drives will be replaces almost immediately 
+	- Assumption with all RAID is that failed drives will be replaced almost immediately 
 		- all finish before next fail
 	- RAID 0 (inexpensive)
 		- OG motivation is find the cheapest drives in cost per byte

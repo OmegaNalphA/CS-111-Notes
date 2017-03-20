@@ -1,0 +1,47 @@
+Chapter 22
+
+Beyond Physical Memory: Policies
+
+We will discuss page replacement policies for the OS 
+How do we decide what pages to evict from memory?
+
+#22.1# Cache Management
+main memory holds subset of all pages in system, basically a cache for virtual memory pages 
+want to minimize the number of cache misses 
+calculate average memory access time of a program 
+
+#22.2# The Optimal replacement Policy
+Replace the page that will be accessed furthest in the future 
+However, future is not well known so can't build general case 
+
+#22.3# A Simple Policy, FIFO
+replaced in order they entered 
+But this doesnt take the importance of blocks, so lots of misses 
+
+#22.4# Another Simple Policy: Random 
+Picks a random page to replace under memory pressure 
+Doesn't really try to be logical with updates 
+
+#22.5# Using History, LRU 
+Check the frequency of how often a page is accessed 
+Recency of access too 
+It's super expensive though 
+
+#22.8# Approximating LRU
+Reduce overhead by Approximating the number 
+use bit, whenever a page is referenced set it to 1, OS clears the bit 
+clock algorithim, move across the pages, if it has a use bit of 0, replace it, if it has a use bit of 1 set to 0 for clearing later 
+
+#22.9# Considering Dirty Pages
+If page has been modified, then its hard to push it back since requires a lot of changes 
+prefer to move out clean tables with unmodified 
+implement a dirty bit
+
+#22.10# Other VM Policies
+Page selection is a huge issue as well 
+can prefetch before its needed, or cluster and group pulls 
+
+#22.11# Thrashing 
+When you run out of physical memory to store anything 
+Admission control: stop some process subsets so only working sets go through, hopefully is enough to make progress 
+Some versions of Linux run an out-of-memory killer where the daemon chooses a memory intensive process and kills it 
